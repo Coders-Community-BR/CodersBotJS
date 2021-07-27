@@ -1,0 +1,33 @@
+{
+  "name": "coders-bot-js",
+  "version": "0.0.1",
+  "description": "Coders Community Discord Server Official Bot",
+  "main": ".",
+  "repository": "https://github.com/Coders-Community-BR/CodersBotJS.git",
+  "author": {
+    "name": "Coders Community",
+    "url": "https://github.com/orgs/Coders-Community-BR"
+  },
+  "contributors": [
+    {
+      "email": "igor@gargantas.org",
+      "name": "Igor M. Pereira",
+      "url": "https://github.com/Igor-MPereira"
+    }
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "discord.js": "^12.5.3",
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.31.0",
+    "nodemon": "^2.0.12"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "typings": "src/index.d.ts"
+}
