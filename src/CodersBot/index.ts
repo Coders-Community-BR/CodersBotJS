@@ -1,5 +1,7 @@
 import { Client, ClientOptions, Message } from 'discord.js';
-import LogsHandler from '~/handlers/logs';
+import Command from '~/commands/_base/Command';
+import CommandPool from '~/commands/_base/CommandPool';
+import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
 
 class CodersBot {
@@ -22,16 +24,39 @@ class CodersBot {
 				commandsDir,
 				logsDir,
 			};
-		} catch (e) {
-			console.error(
-				`ERROR AT LOADING PATHS: %o - [${new Date().toISOString()}]`,
-				e
-			);
+		} catch (e: unknown) {
+			const msgError = `ERROR AT LOADING PATHS: ${e} - [${new Date().toISOString()}]`;
+			CodersBot.ErrorLogger.WriteLine(msgError);
+			console.error(msgError);
 		}
 	}
 
-	public static paths: Record<'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir', string>;
-	public static ErrorLogger: LogsHandler;
+	public static async loadCommands() {
+		try {
+      this.commandPool = new CommandPool(CodersBot.paths.commandFilesDir);
+      await this.commandPool.seed();
+		} catch (e: unknown) {
+			const msgError = `ERROR AT LOADING COMMAND POOL: ${e} - [${new Date().toISOString()}]`;
+			CodersBot.ErrorLogger.WriteLine(msgError);
+			console.error(msgError);
+		}
+	}
+
+  public static TryRun(commandKey: string, message: Message, _args?: Array<string>) {
+    const command = this.commandPool.get(commandKey);
+
+    if(command) {
+      command.Run(message)
+    }
+  }
+
+	public static commandPool: CommandPool;
+
+	public static paths: Record<
+		'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir',
+		string
+	>;
+	public static ErrorLogger: LogHandler;
 	public static prefix: string;
 
 	private static client: Client;
@@ -42,9 +67,9 @@ class CodersBot {
 	}
 	public static set onceReady(cb: (() => void) | null) {
 		if (cb) {
-      CodersBot.once_ready = cb;
-      if(CodersBot.client) CodersBot.client.once('ready', cb);
-    }
+			CodersBot.once_ready = cb;
+			if (CodersBot.client) CodersBot.client.once('ready', cb);
+		}
 	}
 
 	public static get Client() {

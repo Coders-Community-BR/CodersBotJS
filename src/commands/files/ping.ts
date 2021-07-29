@@ -1,4 +1,5 @@
 import { CommandOptions } from '../_base/Command';
+import { ECommandType } from '../_base/Enum';
 
 export default {
 	Name: 'ping',
@@ -7,7 +8,7 @@ export default {
 	Roles: [],
 	// Implement Later
 	// AllowChannels
-	Execute(client, args, message, _command) {
+	Execute: async (client, args, message, _command) => {
 		const sentAt = message.createdTimestamp;
     
 		message.reply({
@@ -15,4 +16,5 @@ export default {
       // reply: message.author
     });
 	},
+	Type: ECommandType._Base
 } as CommandOptions;

@@ -19,7 +19,7 @@ export interface LogsHandlerOptions {
 	id: string;
 }
 
-export default class LogsHandler extends Handler<LogsHandlerOptions> {
+export default class LogHandler extends Handler<LogsHandlerOptions> {
 	private filename!: string;
 	private fileHandle: FileHandle | null = null;
 

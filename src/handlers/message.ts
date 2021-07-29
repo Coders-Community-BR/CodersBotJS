@@ -1,7 +1,6 @@
 import { Message } from 'discord.js';
 import CodersBot from '~/CodersBot';
-import { ICommand } from '~/commands/_base/Command';
-import LogsHandler, { ELogsHandlerLevel } from './logs';
+import LogHandler, { ELogsHandlerLevel } from './logs';
 import Handler from './_base';
 
 export interface MessageHandlerConfig {
@@ -9,13 +8,13 @@ export interface MessageHandlerConfig {
 }
 
 export default class MessageHandler extends Handler<MessageHandlerConfig> {
-  private logger: LogsHandler;
+  private logger: LogHandler;
 
   constructor(config: MessageHandlerConfig) {
     super(config);
 
     this.listener = this.listener.bind(this);
-    this.logger = new LogsHandler({
+    this.logger = new LogHandler({
       id: 'message',
       level: ELogsHandlerLevel.Verbose,
       path: CodersBot.paths.logsDir
@@ -34,9 +33,9 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
 		if (message.author.bot || !message.content.startsWith(this.config.prefix))
 			return;
 
-		const c = (await import('../commands/files/ping')).default;
-		c.Execute(CodersBot.Client, [], message, null as unknown as ICommand);
-		// message.guild?.member(message.author)?.hasPermission
-		// message.channel.send("test")
+    const args = message.content.split(/\s+/g);
+    const cmd = args.shift()?.substring(this.config.prefix.length);
+    
+    if(cmd) CodersBot.TryRun(cmd, message)
 	}
 }
