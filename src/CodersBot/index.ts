@@ -1,30 +1,37 @@
 import { Client, ClientOptions, Message } from 'discord.js';
+import LogsHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
 
 class CodersBot {
-  public static get cwd() { return process.cwd(); } 
+	public static get cwd() {
+		return process.cwd();
+	}
 
 	public static loadPaths() {
-    try {
-      const configDir = resolve('config');
-      const srcDir = resolve('src');
-      const commandsDir = resolve('src/commands');
-      const commandFilesDir = resolve('src/commands/files');
-      const logsDir = resolve('logs');
+		try {
+			const configDir = resolve('config');
+			const srcDir = resolve('src');
+			const commandsDir = resolve('src/commands');
+			const commandFilesDir = resolve('src/commands/files');
+			const logsDir = resolve('logs');
 
-      CodersBot.paths = {
-        configDir,
-        srcDir,
-        commandFilesDir,
-        commandsDir,
-        logsDir
-      };
+			CodersBot.paths = {
+				configDir,
+				srcDir,
+				commandFilesDir,
+				commandsDir,
+				logsDir,
+			};
+		} catch (e) {
+			console.error(
+				`ERROR AT LOADING PATHS: %o - [${new Date().toISOString()}]`,
+				e
+			);
+		}
+	}
 
-    } catch (e) { console.error(`ERROR AT LOADING PATHS: %o - [${new Date().toISOString()}]`, e)}
-  }
-
-	public static paths: Record<string, string>;
-
+	public static paths: Record<'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir', string>;
+	public static ErrorLogger: LogsHandler;
 	public static prefix: string;
 
 	private static client: Client;
@@ -34,7 +41,10 @@ class CodersBot {
 		return CodersBot.once_ready;
 	}
 	public static set onceReady(cb: (() => void) | null) {
-		if (cb) CodersBot.once_ready = cb;
+		if (cb) {
+      CodersBot.once_ready = cb;
+      if(CodersBot.client) CodersBot.client.once('ready', cb);
+    }
 	}
 
 	public static get Client() {

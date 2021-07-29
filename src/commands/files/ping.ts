@@ -1,4 +1,3 @@
-import { Message, MessageEmbed } from 'discord.js';
 import { CommandOptions } from '../_base/Command';
 
 export default {
@@ -8,13 +7,11 @@ export default {
 	Roles: [],
 	// Implement Later
 	// AllowChannels
-	Execute(client, args, message, command) {
+	Execute(client, args, message, _command) {
 		const sentAt = message.createdTimestamp;
-
-		const sendMsg = new MessageEmbed();
     
 		message.reply({
-      content: `Pong! Your Ping is ${(sendMsg.timestamp ?? Date.now()) - sentAt}`,
+      content: `Pong!\n\tAPI ping is ${(Date.now()) - sentAt}.\n\tBot ping is ${client.ws.ping}`,
       // reply: message.author
     });
 	},
