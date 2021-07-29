@@ -33,7 +33,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "yarn build&&node dist/index.js",
-    "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules src/index.ts"
+    "start": "yarn build&&node dist/src/index.js",
+    "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules index.ts"
   }
 }

@@ -14,6 +14,8 @@ CodersBot.onceReady = () => {
 
 CodersBot.init(botConfig, cmdConfig);
 
+CodersBot.loadPaths();
+
 CodersBot.onMessage(messageHandler.listener);
 
 CodersBot.login(process.env['DISCORD_TOKEN']);
