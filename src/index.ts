@@ -1,19 +1,35 @@
+const startedAt = new Date();
+
+import { ClientOptions } from 'discord.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import botConfig from '../config/bot.config';
 import cmdConfig from '../config/command.config';
-import CodersBot from './CodersBot';
+import CodersBot, { CommandConfig } from './CodersBot';
+import LogHandler, { ELogsHandlerLevel } from './handlers/logs';
 import MessageHandler from './handlers/message';
 
-const messageHandler = new MessageHandler(cmdConfig);
+export default async function Startup() {
+	CodersBot.init(botConfig as ClientOptions, cmdConfig as CommandConfig);
 
-CodersBot.onceReady = () => {
-	console.log(`${CodersBot.Client.user?.tag} Ready!`);
-};
+	CodersBot.loadPaths();
 
-CodersBot.init(botConfig, cmdConfig);
+	CodersBot.ErrorLogger = new LogHandler({
+		id: 'error',
+		level: ELogsHandlerLevel.Verbose,
+		path: CodersBot.paths.logsDir,
+	});
 
-CodersBot.onMessage(messageHandler.listener);
+	await CodersBot.loadCommands();
+	
+	CodersBot.onceReady = () => {
+		console.log(`${CodersBot.Client.user?.tag} Ready!`);
+	};
 
-CodersBot.login(process.env['DISCORD_TOKEN']);
+	const messageHandler = new MessageHandler(cmdConfig);
+
+	await CodersBot.ErrorLogger.PrepareToLog(startedAt);
+	CodersBot.onMessage(messageHandler.listener);
+	await CodersBot.login(process.env['DISCORD_TOKEN']);
+}

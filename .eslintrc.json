@@ -17,7 +17,10 @@
     "rules": {
         "@typescript-eslint/no-empty-function": "warn",
         "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "prefer-const": "warn",
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "no-empty": ["warn"]
     },
     "settings": {
         "import/resolver": {
