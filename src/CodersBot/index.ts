@@ -1,8 +1,11 @@
 import { Client, ClientOptions, Message } from 'discord.js';
-import Command from '~/commands/_base/Command';
 import CommandPool from '~/commands/_base/CommandPool';
 import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
+
+export interface CommandConfig {
+	prefix: string;
+}
 
 class CodersBot {
 	public static get cwd() {
@@ -42,11 +45,11 @@ class CodersBot {
 		}
 	}
 
-  public static TryRun(commandKey: string, message: Message, _args?: Array<string>) {
+  public static async TryRun(commandKey: string, message: Message, _args?: Array<string>) {
     const command = this.commandPool.get(commandKey);
 
     if(command) {
-      command.Run(message)
+      await command.Run(message)
     }
   }
 
@@ -81,8 +84,8 @@ class CodersBot {
 	public static onMessage: (callback: (message: Message) => void) => void;
 
 	public static init(
-		botConfig?: ClientOptions | any /* Remove If Possible */,
-		commandConfig?: any
+		botConfig?: ClientOptions,
+		commandConfig?: CommandConfig
 	): void {
 		CodersBot.prefix = commandConfig?.prefix ?? 'c?';
 

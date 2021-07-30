@@ -1,16 +1,17 @@
 const startedAt = new Date();
 
+import { ClientOptions } from 'discord.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import botConfig from '../config/bot.config';
 import cmdConfig from '../config/command.config';
-import CodersBot from './CodersBot';
+import CodersBot, { CommandConfig } from './CodersBot';
 import LogHandler, { ELogsHandlerLevel } from './handlers/logs';
 import MessageHandler from './handlers/message';
 
 export default async function Startup() {
-	CodersBot.init(botConfig, cmdConfig);
+	CodersBot.init(botConfig as ClientOptions, cmdConfig as CommandConfig);
 
 	CodersBot.loadPaths();
 

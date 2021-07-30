@@ -1,8 +1,14 @@
 import { Client, Message, PermissionString, Snowflake } from 'discord.js';
+import CodersBot from '~/CodersBot';
 import { ECommandType } from './Enum';
 
 export interface ExecuteCommandFunction<I extends ICommand = ICommand> {
-	(client: Client, args: Array<string>, message: Message, command: I): void;
+	(
+		client: Client,
+		args: Array<string>,
+		message: Message,
+		command: I
+	): void | PromiseLike<void>;
 }
 
 export interface CommandOptions<I extends ICommand = ICommand> {
@@ -12,6 +18,7 @@ export interface CommandOptions<I extends ICommand = ICommand> {
 	Roles?: Array<Snowflake>;
 	Aliases?: Array<string>;
 	Type?: ECommandType;
+	ShowTyping?: boolean;
 }
 
 export interface ICommand {
@@ -20,6 +27,7 @@ export interface ICommand {
 	readonly Roles: Array<Snowflake>;
 	readonly Aliases: Array<string>;
 	readonly Type: ECommandType;
+	readonly ShowTyping: boolean;
 	CanRun(message: Message): boolean;
 }
 
@@ -28,6 +36,20 @@ export type RunCommandArgs = [name: string] | [command: Command];
 export default class Command<Options extends CommandOptions = CommandOptions>
 	implements ICommand
 {
+	constructor(options: Options, client: Client) {
+		const { Name, Execute, Permissions, Type, Aliases, Roles, ShowTyping } = options;
+		this.client = client;
+		this.Name = Name;
+		this._execute = Execute;
+		this.Permissions = [...(Permissions ?? [])];
+		this.Type = Type ?? ECommandType._Base;
+		this.Aliases = [...(Aliases ?? [])];
+		this.Roles = [...(Roles ?? [])];
+		this.Run = this.Run.bind(this);
+		this.CanRun = this.CanRun.bind(this);
+		this.ShowTyping = ShowTyping ?? false;
+	}
+
 	public readonly client: Client;
 	public readonly Name: string;
 	public readonly _execute: ExecuteCommandFunction<ICommand>;
@@ -35,20 +57,26 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 	public readonly Type: number;
 	public readonly Roles: Array<Snowflake>;
 	public readonly Aliases: Array<string>;
+	public readonly ShowTyping: boolean;
 
-	// public static Run(message: Message, ...args: RunCommandArgs) {
-	// 	const [nameOrCommand] = args;
+	public static async Run(message: Message, ...args: RunCommandArgs) {
+		const [nameOrCommand] = args;
+		let command: Command;
+		if (typeof nameOrCommand === 'string') {
+			const name = nameOrCommand;
+			const _temp = CodersBot.commandPool.get(name);
 
-	// 	if (typeof nameOrCommand === 'string') {
-	//     const name = nameOrCommand;
+			if (!_temp) return;
 
-	// 	} else {
-	//     const command = nameOrCommand;
+			command = _temp;
+		} else {
+			command = nameOrCommand;
+		}
 
-	// 	}
-	// }
+		await command.Run(message);
+	}
 
-	public Run(message: Message, args?: string[]) {
+	public async Run(message: Message, args?: string[]) {
 		try {
 			if (!this.CanRun(message)) return; // Handle Insufficient Permission Later
 
@@ -56,24 +84,31 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 				args = message.content
 					.split(/("(?:(?!").)+")|('(?:(?!').)+')/g)
 					.filter((v) => v !== undefined);
-				
-				args = args.map((v, i) => {
-					if(i % 2 === 0) {
-						return v.split(/\s+/g);
-					}
 
-					return v;
-				}).flat();
+				args = args
+					.map((v, i) => {
+						if (i % 2 === 0) {
+							return v.split(/\s+/g);
+						}
+
+						return v;
+					})
+					.flat();
 			}
 
-			this._execute(this.client, args, message, {
-				Aliases: this.Aliases,
-				CanRun: this.CanRun,
-				Name: this.Name,
-				Permissions: this.Permissions,
-				Roles: this.Roles,
-				Type: this.Type,
-			});
+			this.ShowTyping && message.channel.startTyping();
+			await Promise.resolve(
+				this._execute(this.client, args, message, {
+					Aliases: this.Aliases,
+					CanRun: this.CanRun,
+					Name: this.Name,
+					Permissions: this.Permissions,
+					Roles: this.Roles,
+					Type: this.Type,
+					ShowTyping: this.ShowTyping
+				})
+			);
+			this.ShowTyping && message.channel.stopTyping();
 		} catch (e: unknown) {
 			const loggedAt = new Date();
 			const errorMessage = `ERROR AT 'Command.Run', ${e} - [${loggedAt.toLocaleString(
@@ -84,7 +119,7 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 		}
 	}
 
-	public CanRun(message: Message) {
+	public CanRun(message: Message, checkAdmin?: boolean) {
 		const guildMember = message.member;
 		if (!guildMember) throw ReferenceError('Guild Member Could Not Be Found.');
 		const hasRoles =
@@ -97,21 +132,8 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 
 		const hasPermission =
 			this.Permissions.length > 0
-				? guildMember.hasPermission(this.Permissions)
+				? guildMember.hasPermission(this.Permissions, { checkAdmin })
 				: true;
 		return hasPermission && hasRoles;
-	}
-
-	constructor(options: Options, client: Client) {
-		const { Name, Execute, Permissions, Type, Aliases, Roles } = options;
-		this.client = client;
-		this.Name = Name;
-		this._execute = Execute;
-		this.Permissions = [...(Permissions ?? [])];
-		this.Type = Type ?? ECommandType._Base;
-		this.Aliases = [...(Aliases ?? [])];
-		this.Roles = [...(Roles ?? [])];
-		this.Run = this.Run.bind(this);
-		this.CanRun = this.CanRun.bind(this);
 	}
 }

@@ -1,3 +1,4 @@
+import { MessageEmbed } from 'discord.js';
 import { CommandOptions } from '../_base/Command';
 import { ECommandType } from '../_base/Enum';
 
@@ -8,13 +9,27 @@ export default {
 	Roles: [],
 	// Implement Later
 	// AllowChannels
-	Execute: async (client, args, message, _command) => {
+	Execute: (client, args, message, _command) => {
 		const sentAt = message.createdTimestamp;
-    
+
+		const sendMsg = new MessageEmbed()
+			.setTitle('Pong!')
+			.setDescription('Ping Received And Retrieved.')
+			.addField('🌐 • WebSocket Ping', client.ws.ping + 'ms');
+
 		message.reply({
-      content: `Pong!\n\tAPI ping is ${(Date.now()) - sentAt}.\n\tBot ping is ${client.ws.ping}`,
-      // reply: message.author
-    });
+			content: 'Pinging...'
+		}).then(async m => {
+			sendMsg.addField(
+				'⏳ • Response Ping',
+				m.createdTimestamp - sentAt + 'ms'
+			);
+			await m.edit({
+				content: '',
+				embed: sendMsg
+			});
+		});
 	},
-	Type: ECommandType._Base
+	Type: ECommandType._Base,
+	ShowTyping: true
 } as CommandOptions;

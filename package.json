@@ -35,5 +35,8 @@
     "build": "tsc",
     "start": "yarn build&&node dist/src/index.js",
     "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules index.ts"
+  },
+  "engines": {
+    "node": ">=12.x.x"
   }
 }
