@@ -2,7 +2,7 @@ import { Client, ClientOptions, Message } from 'discord.js';
 import CommandPool from '~/commands/_base/CommandPool';
 import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
-
+import disbut from 'discord-buttons'
 export interface CommandConfig {
     prefix: string;
 }
@@ -84,10 +84,11 @@ class CodersBot {
     public static onMessage: (callback: (message: Message) => void) => void;
 
     public static init(botConfig?: ClientOptions, commandConfig?: CommandConfig): void {
-        CodersBot.prefix = commandConfig?.prefix ?? 'c?';
-
+        
+        CodersBot.prefix = commandConfig?.prefix ?? 'cc?';
         const client = new Client(botConfig);
-
+        disbut(client)
+        
         if (CodersBot.once_ready) client.once('ready', CodersBot.once_ready);
 
         CodersBot.client = client;
