@@ -12,11 +12,17 @@
       "email": "igor@gargantas.org",
       "name": "Igor M. Pereira",
       "url": "https://github.com/Igor-MPereira"
+    },
+    {
+      "email": "bolaknt@gmail.com",
+      "name": "yxqsnz",
+      "url": "https://github.com/yxqsnz"
     }
   ],
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "discord-buttons": "^4.0.0",
     "discord.js": "^12.5.3",
     "dotenv": "^10.0.0"
   },
