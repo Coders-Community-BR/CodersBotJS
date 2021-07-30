@@ -1,5 +1,5 @@
-import { resolve as _resolve } from 'path';
-import CodersBot from '~/CodersBot';
+import { resolve as _resolve } from "path";
+import CodersBot from "~/CodersBot";
 
 /**
  * Returns The Resolved Path Relative To Root Dir (CWD)
