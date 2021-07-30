@@ -1,7 +1,7 @@
 export default class Handler<Config = unknown> {
-  public config: Config;
+    public config: Config;
 
-  constructor(config: Config) {
-    this.config = config;
-  }
+    constructor(config: Config) {
+        this.config = config;
+    }
 }

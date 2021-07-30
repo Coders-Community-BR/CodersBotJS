@@ -1,6 +1,6 @@
 export enum ECommandType {
-  _Base,
-  Staff,
-  Vip,
-  Admin,
+    _Base,
+    Staff,
+    Vip,
+    Admin,
 }
