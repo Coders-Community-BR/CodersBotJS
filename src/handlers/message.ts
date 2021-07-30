@@ -36,6 +36,6 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
     const args = message.content.split(/\s+/g);
     const cmd = args.shift()?.substring(this.config.prefix.length);
     
-    if(cmd) CodersBot.TryRun(cmd, message)
+    if(cmd) await CodersBot.TryRun(cmd, message)
 	}
 }
