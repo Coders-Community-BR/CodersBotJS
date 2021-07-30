@@ -43,7 +43,11 @@ export default {
                 } as any);
                 (await newMessage)
                     .createButtonCollector((_u) => true)
-                    .on('collect', async (_button) => {
+                    .on('collect', async (button) => {
+                        if (button.clicker.id != message.author.id) {
+                            button.reply.send(`somente o ${message.author} pode clicar nesse butao`);
+                            return;
+                        }
                         let channel = await message.guild?.channels.cache.find(
                             (ch) => ch.name == 'conteudo-nao-oficial'
                         );
