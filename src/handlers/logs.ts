@@ -77,7 +77,8 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
                 .replace(/(\d{2})\/(\d{2})\/(\d{4})/g, '$3-$2-$1')}-${this.config.id}.log` !==
                 this.filename
         ) {
-            this.PrepareToLog(timeStamp).then(() => this.Write(data, timeStamp));
+            await this.PrepareToLog(timeStamp);
+            this.Write(data, timeStamp);
             return;
         }
 
@@ -115,7 +116,8 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
                 .replace(/(\d{2})\/(\d{2})\/(\d{4})/g, '$3-$2-$1')}-${this.config.id}.log` !==
                 this.filename
         ) {
-            this.PrepareToLog(timeStamp).then(() => this.WriteLine(data, timeStamp));
+            await this.PrepareToLog(timeStamp);
+            this.Write(data, timeStamp);
             return;
         }
 

@@ -1,5 +1,7 @@
 import { Client, Message, PermissionString, Snowflake } from 'discord.js';
 import CodersBot from '~/CodersBot';
+import PermissionValidator from '../auth/Permissions';
+import { ValidateCanUse } from '../auth/_base';
 import { ECommandType } from './Enum';
 
 export interface ExecuteCommandFunction<I extends ICommand = ICommand> {
@@ -9,7 +11,7 @@ export interface ExecuteCommandFunction<I extends ICommand = ICommand> {
 export interface CommandOptions<I extends ICommand = ICommand> {
     Name: string;
     Execute: ExecuteCommandFunction<I>;
-    Permissions?: Array<PermissionString>;
+    Permissions?: ValidateCanUse<PermissionString>;
     Roles?: Array<Snowflake>;
     Aliases?: Array<string>;
     Type?: ECommandType;
@@ -19,7 +21,7 @@ export interface CommandOptions<I extends ICommand = ICommand> {
 
 export interface ICommand {
     readonly Name: string;
-    readonly Permissions: Array<PermissionString>;
+    // readonly Permissions: Array<PermissionString>;
     readonly Roles: Array<Snowflake>;
     readonly Aliases: Array<string>;
     readonly Type: ECommandType;
@@ -37,7 +39,7 @@ export default class Command<Options extends CommandOptions = CommandOptions> im
         this.client = client;
         this.Name = Name;
         this._execute = Execute;
-        this.Permissions = [...(Permissions ?? [])];
+        this.Permissions = new PermissionValidator(Permissions ?? []);
         this.Type = Type ?? ECommandType._Base;
         this.Aliases = [...(Aliases ?? [])];
         this.Roles = [...(Roles ?? [])];
@@ -50,7 +52,7 @@ export default class Command<Options extends CommandOptions = CommandOptions> im
     public readonly client: Client;
     public readonly Name: string;
     public readonly _execute: ExecuteCommandFunction<ICommand>;
-    public readonly Permissions: Array<PermissionString>;
+    public readonly Permissions: PermissionValidator;
     public readonly Type: number;
     public readonly Roles: Array<Snowflake>;
     public readonly Aliases: Array<string>;
@@ -100,7 +102,7 @@ export default class Command<Options extends CommandOptions = CommandOptions> im
                     Aliases: this.Aliases,
                     CanRun: this.CanRun,
                     Name: this.Name,
-                    Permissions: this.Permissions,
+                    // Permissions: this.Permissions,
                     Roles: this.Roles,
                     Type: this.Type,
                     ShowTyping: this.ShowTyping,
@@ -129,10 +131,8 @@ export default class Command<Options extends CommandOptions = CommandOptions> im
                       .every((k) => this.Roles.includes(k))
                 : true;
 
-        const hasPermission =
-            this.Permissions.length > 0
-                ? guildMember.hasPermission(this.Permissions, { checkAdmin })
-                : true;
+        const hasPermission = this.Permissions.validate(guildMember, checkAdmin);
+
         return hasPermission && hasRoles;
     }
 }
