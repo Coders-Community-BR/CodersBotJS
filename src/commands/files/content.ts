@@ -29,8 +29,10 @@ export default {
                 button.reply.send(`somente o ${message.author} pode clicar nesse butao`);
                 return;
             }
-            if (button.id == `${message.id}-btn-ofc`)
+            if (button.id == `${message.id}-btn-ofc`) {
                 message.reply('os conteudos oficiais estao disponiveis em: <#844012455906508852>');
+				msg.delete();
+			}
             else {
                 officialButton.setLabel('não, vou ficar nos oficiais mesmo');
                 nOfficialButton.setLabel('sim, eu vou querer os não-oficiais');
@@ -48,6 +50,10 @@ export default {
                             button.reply.send(`somente o ${message.author} pode clicar nesse butao`);
                             return;
                         }
+						if (button.id != `${message.id}-btn-nofc`) {
+							await button.reply.defer(false);
+							return;
+						}
                         let channel = await message.guild?.channels.cache.find(
                             (ch) => ch.name == 'conteudo-nao-oficial'
                         );
