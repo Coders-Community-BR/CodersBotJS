@@ -19,6 +19,7 @@ export interface CommandOptions<I extends ICommand = ICommand> {
 	Aliases?: Array<string>;
 	Type?: ECommandType;
 	ShowTyping?: boolean;
+	Description?: string;
 }
 
 export interface ICommand {
@@ -28,6 +29,7 @@ export interface ICommand {
 	readonly Aliases: Array<string>;
 	readonly Type: ECommandType;
 	readonly ShowTyping: boolean;
+	readonly Description: string;
 	CanRun(message: Message): boolean;
 }
 
@@ -37,7 +39,7 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 	implements ICommand
 {
 	constructor(options: Options, client: Client) {
-		const { Name, Execute, Permissions, Type, Aliases, Roles, ShowTyping } = options;
+		const { Name, Execute, Permissions, Type, Aliases, Roles, ShowTyping, Description } = options;
 		this.client = client;
 		this.Name = Name;
 		this._execute = Execute;
@@ -48,16 +50,18 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 		this.Run = this.Run.bind(this);
 		this.CanRun = this.CanRun.bind(this);
 		this.ShowTyping = ShowTyping ?? false;
+		this.Description = Description ?? '';
 	}
 
 	public readonly client: Client;
 	public readonly Name: string;
 	public readonly _execute: ExecuteCommandFunction<ICommand>;
-	public Permissions: Array<PermissionString>;
+	public readonly Permissions: Array<PermissionString>;
 	public readonly Type: number;
 	public readonly Roles: Array<Snowflake>;
 	public readonly Aliases: Array<string>;
 	public readonly ShowTyping: boolean;
+	public readonly Description: string;
 
 	public static async Run(message: Message, ...args: RunCommandArgs) {
 		const [nameOrCommand] = args;
@@ -105,7 +109,8 @@ export default class Command<Options extends CommandOptions = CommandOptions>
 					Permissions: this.Permissions,
 					Roles: this.Roles,
 					Type: this.Type,
-					ShowTyping: this.ShowTyping
+					ShowTyping: this.ShowTyping,
+					Description: this.Description
 				})
 			);
 			this.ShowTyping && message.channel.stopTyping();
