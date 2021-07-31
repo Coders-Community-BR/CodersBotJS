@@ -112,7 +112,8 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
 
                         return v;
                     })
-                    .flat();
+                    .flat()
+                    .filter((v) => v !== '');
             }
 
             this.ShowTyping && message.channel.startTyping();
@@ -133,7 +134,9 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
             this.ShowTyping && message.channel.stopTyping();
         } catch (e: unknown) {
             const loggedAt = new Date();
-            const errorMessage = `ERROR AT 'Command.Run', ${(e as Error).stack} - [${loggedAt.toLocaleString('pt-BR')}]`;
+            const errorMessage = `ERROR AT 'Command.Run', ${
+                (e as Error).stack
+            } - [${loggedAt.toLocaleString('pt-BR')}]`;
 
             console.error(errorMessage);
         }

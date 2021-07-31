@@ -4,8 +4,8 @@ import { MessageEmbed } from 'discord.js';
 import { MessageButton } from 'discord-buttons';
 
 export default {
-    Name: 'acessar-conteudo-para-estudar',
-    Aliases: ['acpe', 'conteudos'],
+    Name: 'conteudos',
+    Aliases: ['acpe'],
     Execute: async (_client, _args, message, _command) => {
         message.channel.stopTyping(true);
         const selectContentMessage = new MessageEmbed()
@@ -70,4 +70,5 @@ export default {
     },
     Type: ECommandType._Base,
     ShowTyping: true,
+    Description: 'Ganha Acesso À Vários Conteúdos Para Estudo.'
 } as CommandOptions;
