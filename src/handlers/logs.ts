@@ -38,9 +38,9 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
         } catch (e: unknown) {
             let fatal = false;
             const loggedAt = new Date();
-            const errorMessage = `ERROR AT 'LogsHandler.PrepareToLog', ${e} - [${loggedAt.toLocaleString(
-                'pt-BR'
-            )}]`;
+            const errorMessage = `ERROR AT 'LogsHandler.PrepareToLog', ${
+                (e as Error).stack
+            } - [${loggedAt.toLocaleString('pt-BR')}]`;
 
             if (this.config.id === 'errors') {
                 errorMessage.concat(' - [FATAL] Error occurred when trying to prepare to log');
@@ -97,9 +97,9 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
             await appendFile(this.fileHandle, writeLog, 'utf-8');
         } catch (e: unknown) {
             const loggedAt = new Date();
-            const errorMessage = `ERROR AT 'LogsHandler.Log', ${e} - [${loggedAt.toLocaleString(
-                'pt-BR'
-            )}]`;
+            const errorMessage = `ERROR AT 'LogsHandler.Log', ${
+                (e as Error).stack
+            } - [${loggedAt.toLocaleString('pt-BR')}]`;
 
             if (!fatal) CodersBot.ErrorLogger.Write(errorMessage, loggedAt);
 
@@ -137,7 +137,7 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
             await appendFile(this.fileHandle, writeLog, 'utf-8');
         } catch (e: unknown) {
             const loggedAt = new Date();
-            const errorMessage = `ERROR AT 'LogsHandler.Log', ${e} - [${loggedAt.toLocaleString(
+            const errorMessage = `ERROR AT 'LogsHandler.Log', ${(e as Error).stack} - [${loggedAt.toLocaleString(
                 'pt-BR'
             )}]`;
 
