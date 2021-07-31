@@ -28,7 +28,7 @@ class CodersBot {
                 logsDir,
             };
         } catch (e: unknown) {
-            const msgError = `ERROR AT LOADING PATHS: ${e} - [${new Date().toISOString()}]`;
+            const msgError = `ERROR AT LOADING PATHS: ${(e as Error).stack} - [${new Date().toLocaleString('pt-BR')}]`;
             CodersBot.ErrorLogger.WriteLine(msgError);
             console.error(msgError);
         }
@@ -38,8 +38,8 @@ class CodersBot {
         try {
             this.commandPool = new CommandPool(CodersBot.paths.commandFilesDir);
             await this.commandPool.seed();
-        } catch (e: unknown) {
-            const msgError = `ERROR AT LOADING COMMAND POOL: ${e} - [${new Date().toISOString()}]`;
+        } catch (e) {
+            const msgError = `ERROR AT LOADING COMMAND POOL: ${(e as Error).stack} - [${new Date().toLocaleString('pt-BR')}]`;
             CodersBot.ErrorLogger.WriteLine(msgError);
             console.error(msgError);
         }
