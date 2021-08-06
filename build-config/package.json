@@ -1,0 +1,8 @@
+{
+  "name": "path-register",
+  "version": "1.0.0",
+  "license": "MIT",
+  "devDependencies": {
+    "tsconfig-paths": "^3.10.1"
+  }
+}
