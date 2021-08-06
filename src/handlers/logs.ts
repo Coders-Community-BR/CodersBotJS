@@ -1,7 +1,8 @@
-import { FileHandle, appendFile } from 'fs/promises';
-import { open } from 'node:fs/promises';
+import { constants } from 'fs';
+import { FileHandle, appendFile, access, open, mkdir } from 'fs/promises';
 import CodersBot from '~/CodersBot';
 import { resolve } from '~/utils';
+import { isSystemError } from '~/utils/assert';
 import Handler from './_base';
 
 export enum ELogsHandlerLevel {
@@ -32,7 +33,13 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
             if (this.fileHandle) {
                 await this.fileHandle.close();
             }
-
+            await access(resolve(CodersBot.paths.logsDir), constants.R_OK | constants.W_OK).catch(
+                async (e) => {
+                    if(isSystemError(e) && e.code === "ENOENT") {
+                      await mkdir(resolve(CodersBot.paths.logsDir), { recursive: true });
+                    }
+                }
+            );
             this.fileHandle = await open(resolve(CodersBot.paths.logsDir, filename), 'w');
             this.filename = filename;
         } catch (e: unknown) {
@@ -129,17 +136,19 @@ export default class LogHandler extends Handler<LogsHandlerOptions> {
             }
 
             let writeLog = data;
+
             if (!writeLog.includes(`${timeStamp.toLocaleString('pt-BR')}`)) {
                 writeLog += ` - [${timeStamp.toLocaleString('pt-BR')}]`;
             }
+
             writeLog += '\n';
 
             await appendFile(this.fileHandle, writeLog, 'utf-8');
         } catch (e: unknown) {
             const loggedAt = new Date();
-            const errorMessage = `ERROR AT 'LogsHandler.Log', ${(e as Error).stack} - [${loggedAt.toLocaleString(
-                'pt-BR'
-            )}]`;
+            const errorMessage = `ERROR AT 'LogsHandler.Log', ${
+                (e as Error).stack
+            } - [${loggedAt.toLocaleString('pt-BR')}]`;
 
             if (!fatal) CodersBot.ErrorLogger.Write(errorMessage, loggedAt);
 

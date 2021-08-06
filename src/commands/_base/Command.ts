@@ -1,17 +1,48 @@
 import { Client, Message } from 'discord.js';
 import CodersBot from '~/CodersBot';
+import ArgsHandler, { ResolvedArguments } from '~/handlers/args';
 import PermissionValidator, { ValidatePermission } from '../auth/Permissions';
 import RoleValidator, { ValidateRole } from '../auth/Roles';
 import { EValidationType } from '../auth/_base';
 import { ECommandType } from './Enum';
 
-export interface ExecuteCommandFunction<I extends ICommand = ICommand> {
-    (client: Client, args: Array<string>, message: Message, command: I): void | PromiseLike<void>;
+export type ExecuteCommandFunction<TFlags extends keyof any, I extends ICommand<TFlags> = ICommand<TFlags>> = (
+    client: Client,
+    args: ResolvedArguments<TFlags>,
+    message: Message,
+    command: I
+) => void | PromiseLike<void>;
+
+export type StopCommandExecutionFunction = () => void;
+
+export type RunBeforeCommandFunction<TFlags extends keyof any, I extends ICommand<TFlags> = ICommand<TFlags>> = (
+    ...args: [...args: Parameters<ExecuteCommandFunction<TFlags, I>>, stop: StopCommandExecutionFunction]
+) => ReturnType<ExecuteCommandFunction<TFlags>>;
+
+export type UsageFlag<TName extends string = string, Flags extends keyof any = string> = {
+    type: 'string' | 'boolean' | 'number';
+    name: TName;
+    aliases?: Array<string>;
+    values?: Array<string | number>;
+    description?: string;
+    RunBeforeCommand?: RunBeforeCommandFunction<Flags>;
+};
+
+export type UsageArgument = {
+    label?:  string;
+    type?: 'string' | 'boolean' | 'number';
+    values?: Array<string | number>;
+    description?: string;
 }
 
-export interface CommandOptions<I extends ICommand = ICommand> {
+export type UsageObject<TFlags extends keyof any = string> = {
+    args?: ReadonlyArray<UsageArgument>;
+    flags?: ReadonlyArray<UsageFlag<Include<TFlags, string>, TFlags>>;
+};
+
+export interface CommandOptions<TFlags extends keyof any = string, I extends ICommand<TFlags> = ICommand<TFlags>> {
     Name: string;
-    Execute: ExecuteCommandFunction<I>;
+    Execute: ExecuteCommandFunction<TFlags, I>;
     Permissions?: ValidatePermission;
     Roles?: ValidateRole;
     Aliases?: Array<string>;
@@ -20,9 +51,10 @@ export interface CommandOptions<I extends ICommand = ICommand> {
     ShowTyping?: boolean;
     Description?: string;
     CheckAdmin?: boolean;
+    Usage?: Readonly<UsageObject<TFlags>>;
 }
 
-export interface ICommand {
+export interface ICommand<TFlags extends keyof any> {
     readonly Name: string;
     readonly Permissions: ValidatePermission;
     readonly Roles: ValidateRole;
@@ -32,12 +64,13 @@ export interface ICommand {
     readonly ValidationType: EValidationType;
     readonly Description: string;
     readonly CheckAdmin: boolean;
+    readonly Usage: UsageObject<TFlags> | null;
     CanRun(message: Message): boolean;
 }
 
 export type RunCommandArgs = [name: string] | [command: Command];
 
-export default class Command<Options extends CommandOptions = CommandOptions> {
+export default class Command<TFlags extends keyof any = string, Options extends CommandOptions<TFlags> = CommandOptions<TFlags>> {
     constructor(options: Options, client: Client) {
         const {
             Name,
@@ -50,6 +83,7 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
             Description,
             ValidationType,
             CheckAdmin,
+            Usage,
         } = options;
         this.client = client;
         this.Name = Name;
@@ -64,11 +98,30 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
         this.Description = Description ?? '';
         this.ValidationType = ValidationType ?? EValidationType.PermAndRole;
         this.CheckAdmin = CheckAdmin ?? true;
+
+        if(Usage) {
+            this.Usage = { ...Usage };
+            this.argsHandler = new ArgsHandler<TFlags>({
+                splitArgsMatch: /\s+/g,
+                splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g,
+                usageMetada: { ...Usage },
+            });
+        } else {
+            this.Usage = null;
+            this.argsHandler = new ArgsHandler<TFlags>({
+                splitArgsMatch: /\s+/g,
+                splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g,
+                usageMetada: null,
+            });
+        } 
+        
     }
+
+    private argsHandler: ArgsHandler<TFlags>;
 
     public readonly client: Client;
     public readonly Name: string;
-    public readonly _execute: ExecuteCommandFunction<ICommand>;
+    public readonly _execute: ExecuteCommandFunction<TFlags, ICommand<TFlags>>;
     public readonly Permissions: PermissionValidator;
     public readonly Roles: RoleValidator;
     public readonly Type: number;
@@ -77,6 +130,7 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
     public readonly Description: string;
     public readonly ValidationType: EValidationType;
     public readonly CheckAdmin: boolean;
+    public readonly Usage: UsageObject<TFlags> | null;
 
     public static async Run(message: Message, ...args: RunCommandArgs) {
         const [nameOrCommand] = args;
@@ -95,30 +149,16 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
         await command.Run(message);
     }
 
-    public async Run(message: Message, args?: string[]) {
+    public async Run(message: Message, args?: Array<string>) {
         try {
             if (!this.CanRun(message, this.CheckAdmin)) return; // Handle Insufficient Permission Later
 
-            if (!args) {
-                args = message.content
-                    .split(/("(?:(?!").)+")|('(?:(?!').)+')/g)
-                    .filter((v) => v !== undefined);
-
-                args = args
-                    .map((v, i) => {
-                        if (i % 2 === 0) {
-                            return v.split(/\s+/g);
-                        }
-
-                        return v;
-                    })
-                    .flat()
-                    .filter((v) => v !== '');
-            }
+            const content = args && args.length ? args.join(' ') : message.content;
+            const resArgs = this.argsHandler.ResolveArgs(content);
 
             this.ShowTyping && message.channel.startTyping();
             await Promise.resolve(
-                this._execute(this.client, args, message, {
+                this._execute(this.client, resArgs, message, {
                     Aliases: this.Aliases,
                     CanRun: this.CanRun,
                     Name: this.Name,
@@ -129,9 +169,10 @@ export default class Command<Options extends CommandOptions = CommandOptions> {
                     Description: this.Description,
                     ValidationType: this.ValidationType,
                     CheckAdmin: this.CheckAdmin,
+                    Usage: this.Usage,
                 })
             );
-            this.ShowTyping && message.channel.stopTyping();
+            this.ShowTyping && message.channel.stopTyping(true);
         } catch (e: unknown) {
             const loggedAt = new Date();
             const errorMessage = `ERROR AT 'Command.Run', ${

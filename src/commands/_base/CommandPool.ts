@@ -9,13 +9,11 @@ export default class CommandPool {
     private ErrorLogger: LogHandler;
 
     private _commands: Map<string, Command>;
-    private _aliasMap: Map<string, string>;
     public path: string;
 
     constructor(path: string) {
         this.path = path;
         this.ErrorLogger = CodersBot.ErrorLogger;
-        this._aliasMap = new Map();
         this._commands = new Map();
     }
 
@@ -35,11 +33,21 @@ export default class CommandPool {
                         command = new Command(commandOpts, CodersBot.Client);
                 }
 
+                if (this._commands.has(commandOpts.Name)) {
+                    console.error(`COMMAND NAME OVERLAPS: ${commandOpts.Name}`);
+                    process.exit(1);
+                }
+
                 this._commands.set(commandOpts.Name, command);
 
                 if (commandOpts.Aliases) {
                     for (const alias of commandOpts.Aliases) {
-                        this._aliasMap.set(alias, commandOpts.Name);
+                        if (this._commands.has(alias)) {
+                            console.error(`COMMAND ALIAS OVERLAPS: ${alias}`);
+                            process.exit(1);
+                        }
+
+                        this._commands.set(alias, command);
                     }
                 }
             }
@@ -55,16 +63,40 @@ export default class CommandPool {
      * @param key Name or Alias
      */
     public get(key: string) {
-        let command = this._commands.get(key);
+        return this._commands.get(key) ?? null;
+    }
 
-        if (!command) {
-            const commandKey = this._aliasMap.get(key);
+    public toArray(limit?: number) {
+        const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
+        const commandArray = new Array<Command>(arrayLimit);
 
-            if (!commandKey) return null;
+        const cmdIterator = this._commands.values();
 
-            command = this._commands.get(commandKey);
+        for (let i = 0; i < arrayLimit; i++) {
+            const result = cmdIterator.next();
+
+            if (result.done) break;
+
+            commandArray[i] = result.value;
         }
 
-        return command ?? null;
+        return commandArray;
+    }
+
+    public Select<Tresult>(callback: (command: Command) => Tresult, limit?: number) {
+        const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
+        const commandArray = new Array<Tresult>(arrayLimit);
+
+        const cmdIterator = this._commands.values();
+
+        for (let i = 0; i < arrayLimit; i++) {
+            const result = cmdIterator.next();
+
+            if (result.done) break;
+
+            commandArray[i] = callback(result.value);
+        }
+
+        return commandArray;
     }
 }

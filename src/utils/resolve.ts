@@ -5,6 +5,6 @@ import CodersBot from '~/CodersBot';
  * Returns The Resolved Path Relative To Root Dir (CWD)
  * @param path Path Relative To Root
  */
-export function resolve(...paths: string[]) {
+export function resolve(...paths: Array<string>) {
     return _resolve(CodersBot.cwd, ...paths);
 }
