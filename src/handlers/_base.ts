@@ -1,7 +1,7 @@
 export default class Handler<Config = unknown> {
-    public config: Config;
+    public readonly config: Config;
 
     constructor(config: Config) {
-        this.config = config;
+        this.config = Object.freeze(config);
     }
 }

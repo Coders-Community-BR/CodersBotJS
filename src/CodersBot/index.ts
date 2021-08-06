@@ -1,4 +1,4 @@
-import { Client, ClientOptions, Message } from 'discord.js';
+import { Client, ClientOptions, Message, MessageEmbedOptions } from 'discord.js';
 import CommandPool from '~/commands/_base/CommandPool';
 import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
@@ -39,9 +39,10 @@ class CodersBot {
             this.commandPool = new CommandPool(CodersBot.paths.commandFilesDir);
             await this.commandPool.seed();
         } catch (e) {
-            const msgError = `ERROR AT LOADING COMMAND POOL: ${(e as Error).stack} - [${new Date().toLocaleString('pt-BR')}]`;
+            const msgError = `ERROR AT LOADING COMMAND POOL ${(e as Error).stack}\n\rat [${new Date().toLocaleString('pt-BR')}]`;
             CodersBot.ErrorLogger.WriteLine(msgError);
             console.error(msgError);
+            
         }
     }
 
@@ -61,6 +62,8 @@ class CodersBot {
     >;
     public static ErrorLogger: LogHandler;
     public static prefix: string;
+
+    public static defaultEmbedOptions: MessageEmbedOptions
 
     private static client: Client;
     private static once_ready: null | (() => void) = null;
@@ -86,6 +89,13 @@ class CodersBot {
     public static init(botConfig?: ClientOptions, commandConfig?: CommandConfig): void {
         
         CodersBot.prefix = commandConfig?.prefix ?? 'cc?';
+        CodersBot.defaultEmbedOptions = {
+            color: '#1749f0',
+            image: {
+                url: 'https://cdn.discordapp.com/icons/829921221142380544/c36f8ac2c1a520cd2ca9ee6a0b3c0307.webp?size=128',
+            },
+        };
+
         const client = new Client(botConfig);
         disbut(client)
         
