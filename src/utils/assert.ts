@@ -24,8 +24,7 @@ export function isCallable(x: unknown): x is Callable<any> {
 
 export function isFunction(x: unknown): x is (...args: any) => any {
   const func = x as (...args: any) => any;
-
-  return func !== null && func !== undefined && typeof func !== 'function';
+  return func !== null && func !== undefined && typeof func === 'function';
 }
 
 export function isTokenArgument(x: unknown): x is TokenArgument {
@@ -65,4 +64,17 @@ export function isSameValue<T extends Indexed<any>>(left: T, right: T, depth = 1
   }
 
   return true;
+}
+
+
+export function CountInArray<T>(array: Array<T> | ReadonlyArray<T>, selector: ((el: T) => boolean) | T) {
+  let count = 0;
+  for(const el of array) {
+    const toCount = isFunction(selector) ? selector(el) : selector;
+    
+    if(typeof selector === 'function' && toCount) count++
+    else if(toCount === el) count++
+  }
+
+  return count;
 }

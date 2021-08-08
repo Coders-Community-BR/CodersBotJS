@@ -90,11 +90,11 @@ export default abstract class Validator<T> {
 
     this.validator = _validator;
 
-    if (typeof validator === 'function') {
+    if (typeof _validator === 'function') {
       this.Type = EValidatorType.Callback;
-    } else if (validator instanceof Array) {
+    } else if (_validator instanceof Array) {
       this.Type = EValidatorType.Array;
-    } else if (isValidatorLogicalObject(validator)) {
+    } else if (isValidatorLogicalObject(_validator)) {
       this.Type = EValidatorType.Object;
     } else {
       throw TypeError("Illegal 'validator'");

@@ -3,22 +3,22 @@ import { isFunction, isTokenArgument } from '~/utils/assert';
 import { Flags } from './flags';
 import Handler from './_base';
 
-export interface ResolvedArgumentsOptions<T extends keyof any> {
+export interface ResolvedArgumentsOptions {
   args: Array<TokenArgument>;
-  flags: Flags<T>;
+  flags: Flags;
   raw: Array<string>;
 }
 
-export class ResolvedArguments<T extends keyof any = string>
+export class ResolvedArguments
   implements ArrayLike<Readonly<TokenArgument>>, IQueryable<Readonly<TokenArgument>>
 {
   public readonly length: number;
   [index: number]: Readonly<TokenArgument>;
 
-  public readonly flags: Flags<T>;
+  public readonly flags: Flags;
   public readonly raw: Array<string>;
 
-  constructor(options: ResolvedArgumentsOptions<T>) {
+  constructor(options: ResolvedArgumentsOptions) {
     let argIndex = -1;
     const { args, flags, raw } = options;
     for (let i = 0; i < args.length; i++) {
@@ -108,22 +108,21 @@ export class TokenArgument {
   public readonly isQuoted: boolean;
 }
 
-export interface ArgsHandlerOptions<Flags extends keyof any = string> {
+export interface ArgsHandlerOptions {
   splitArgsMatch: string | RegExp;
   splitQuoted: string | RegExp;
-  usageMetada: UsageObject<Flags> | null;
 }
 
-export default class ArgsHandler<TFlags extends keyof any = string> extends Handler<
-  ArgsHandlerOptions<TFlags>
+export default class ArgsHandler extends Handler<
+  ArgsHandlerOptions
 > {
-  constructor(options: ArgsHandlerOptions<TFlags>) {
+  constructor(options: ArgsHandlerOptions) {
     super(options);
 
     this.ResolveArgs = this.ResolveArgs.bind(this);
   }
 
-  public ResolveArgs(content: string): ResolvedArguments<TFlags> {
+  public ResolveArgs(content: string, metadata: UsageObject | null): ResolvedArguments {
     const lookupFlags: Array<TokenArgument> = [];
     const splitQuotedArgs = content.split(this.config.splitQuoted).filter((v) => v !== undefined);
     const firstArg = splitQuotedArgs.shift() ?? '';
@@ -151,9 +150,9 @@ export default class ArgsHandler<TFlags extends keyof any = string> extends Hand
       }, firstArg.split(/\s+/g))
       .filter((v) => v !== '')
       .slice(1);
-    const flags = new Flags<TFlags>(this.config.usageMetada?.flags, lookupFlags);
+    const flags = new Flags(metadata?.flags, lookupFlags);
 
-    return new ResolvedArguments<TFlags>({
+    return new ResolvedArguments({
       args: lookupFlags,
       flags,
       raw: rawArgs

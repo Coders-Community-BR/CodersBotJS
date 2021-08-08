@@ -1,17 +1,16 @@
-import { Client, Message } from 'discord.js';
+import { Client, Message, PermissionString, Snowflake } from 'discord.js';
 import CodersBot from '~/CodersBot';
-import ArgsHandler, { ResolvedArguments } from '~/handlers/args';
+import { ResolvedArguments } from '~/handlers/args';
 import PermissionValidator, { ValidatePermission } from '../auth/Permissions';
 import RoleValidator, { ValidateRole } from '../auth/Roles';
-import { EValidationType } from '../auth/_base';
+import { EValidationType, LogicalObject } from '../auth/_base';
 import { ECommandType } from './Enum';
 
 export type ExecuteCommandFunction<
-  TFlags extends keyof any,
-  I extends ICommand<TFlags> = ICommand<TFlags>
+  I extends ICommand = ICommand
 > = (
   client: Client,
-  args: ResolvedArguments<TFlags>,
+  args: ResolvedArguments,
   message: Message,
   command: I
 ) => void | PromiseLike<void>;
@@ -19,19 +18,22 @@ export type ExecuteCommandFunction<
 export type StopCommandExecutionFunction = () => void;
 
 export type RunBeforeCommandFunction<
-  TFlags extends keyof any,
-  I extends ICommand<TFlags> = ICommand<TFlags>
+  I extends ICommand = ICommand
 > = (
-  ...args: [...args: Parameters<ExecuteCommandFunction<TFlags, I>>, stop: StopCommandExecutionFunction]
-) => ReturnType<ExecuteCommandFunction<TFlags>>;
+  ...args: [
+    ...args: Parameters<ExecuteCommandFunction<I>>,
+    stop: StopCommandExecutionFunction
+  ]
+) => ReturnType<ExecuteCommandFunction>;
 
-export type UsageFlag<TName extends string = string, Flags extends keyof any = string> = {
+export type UsageFlag = {
   type: 'string' | 'boolean' | 'number';
-  name: TName;
+  name: string;
   aliases?: Array<string>;
   values?: Array<string | number>;
   description?: string;
-  RunBeforeCommand?: RunBeforeCommandFunction<Flags>;
+  RunBeforeCommand?: RunBeforeCommandFunction;
+  SpecialFlag?: boolean;
 };
 
 export type UsageArgument = {
@@ -41,17 +43,16 @@ export type UsageArgument = {
   description?: string;
 };
 
-export type UsageObject<TFlags extends keyof any = string> = {
+export type UsageObject = {
   args?: ReadonlyArray<UsageArgument>;
-  flags?: ReadonlyArray<UsageFlag<Include<TFlags, string>, TFlags>>;
+  flags?: ReadonlyArray<UsageFlag>;
 };
 
 export interface CommandOptions<
-  TFlags extends keyof any = string,
-  I extends ICommand<TFlags> = ICommand<TFlags>
+  I extends ICommand = ICommand
 > {
   Name: string;
-  Execute: ExecuteCommandFunction<TFlags, I>;
+  Execute: ExecuteCommandFunction<I>;
   Permissions?: ValidatePermission;
   Roles?: ValidateRole;
   Aliases?: Array<string>;
@@ -60,28 +61,44 @@ export interface CommandOptions<
   ShowTyping?: boolean;
   Description?: string;
   CheckAdmin?: boolean;
-  Usage?: Readonly<UsageObject<TFlags>>;
+  Usage?: Readonly<UsageObject>;
+  DisablePermissionWarning?: boolean;
 }
 
-export interface ICommand<TFlags extends keyof any> {
+export interface ICommand {
   readonly Name: string;
   readonly Permissions: ValidatePermission;
   readonly Roles: ValidateRole;
   readonly Aliases: Array<string>;
   readonly Type: ECommandType;
-  readonly ShowTyping: boolean;
+  readonly ShowsTyping: boolean;
   readonly ValidationType: EValidationType;
   readonly Description: string;
-  readonly CheckAdmin: boolean;
-  readonly Usage: UsageObject<TFlags> | null;
+  readonly ChecksAdmin: boolean;
+  readonly DisablesPermissionWarning: boolean;
+  readonly Usage: UsageObject | null;
   CanRun(message: Message): boolean;
 }
 
 export type RunCommandArgs = [name: string] | [command: Command];
 
+export interface CanRunReport {
+  result: boolean;
+  MissingRoles: LogicalObject<Snowflake>;
+  MissingPermissions: LogicalObject<PermissionString>;
+}
+
+const defaultFlags: ReadonlyArray<UsageFlag> = [
+  {
+    name: '--permissions',
+    type: 'boolean',
+    aliases: ['--perms'],
+    SpecialFlag: true
+  }
+];
+
 export default class Command<
-  TFlags extends keyof any = string,
-  Options extends CommandOptions<TFlags> = CommandOptions<TFlags>
+  Options extends CommandOptions = CommandOptions
 > {
   constructor(options: Options, client: Client) {
     const {
@@ -95,8 +112,10 @@ export default class Command<
       Description,
       ValidationType,
       CheckAdmin,
-      Usage
+      Usage,
+      DisablePermissionWarning
     } = options;
+
     this.client = client;
     this.Name = Name;
     this._execute = Execute;
@@ -110,29 +129,15 @@ export default class Command<
     this.Description = Description ?? '';
     this.ValidationType = ValidationType ?? EValidationType.PermAndRole;
     this.CheckAdmin = CheckAdmin ?? true;
-
-    if (Usage) {
-      this.Usage = { ...Usage };
-      this.argsHandler = new ArgsHandler<TFlags>({
-        splitArgsMatch: /\s+/g,
-        splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g,
-        usageMetada: { ...Usage }
-      });
-    } else {
-      this.Usage = null;
-      this.argsHandler = new ArgsHandler<TFlags>({
-        splitArgsMatch: /\s+/g,
-        splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g,
-        usageMetada: null
-      });
-    }
+    this.DisablePermissionWarning = DisablePermissionWarning ?? false;
+    this.Usage = Usage
+      ? { args: Usage.args, flags: defaultFlags.concat(Usage.flags ?? []) }
+      : { flags: defaultFlags };
   }
-
-  private argsHandler: ArgsHandler<TFlags>;
 
   public readonly client: Client;
   public readonly Name: string;
-  public readonly _execute: ExecuteCommandFunction<TFlags, ICommand<TFlags>>;
+  public readonly _execute: ExecuteCommandFunction<ICommand>;
   public readonly Permissions: PermissionValidator;
   public readonly Roles: RoleValidator;
   public readonly Type: number;
@@ -141,7 +146,8 @@ export default class Command<
   public readonly Description: string;
   public readonly ValidationType: EValidationType;
   public readonly CheckAdmin: boolean;
-  public readonly Usage: UsageObject<TFlags> | null;
+  public readonly Usage: UsageObject | null;
+  public readonly DisablePermissionWarning: boolean;
 
   public static async Run(message: Message, ...args: RunCommandArgs) {
     const [nameOrCommand] = args;
@@ -161,34 +167,58 @@ export default class Command<
   }
 
   public async Run(message: Message, args?: Array<string>) {
+    const commandInterface: ICommand = {
+      Aliases: this.Aliases,
+      CanRun: this.CanRun,
+      Name: this.Name,
+      Permissions: this.Permissions.validator,
+      Roles: this.Roles.validator,
+      Type: this.Type,
+      ShowsTyping: this.ShowTyping,
+      Description: this.Description,
+      ValidationType: this.ValidationType,
+      ChecksAdmin: this.CheckAdmin,
+      Usage: this.Usage,
+      DisablesPermissionWarning: this.DisablePermissionWarning
+    };
+    let stopExec = false;
+    const stop = () => {
+      stopExec = true;
+    };
     try {
-      if (!this.CanRun(message, this.CheckAdmin)) return; // Handle Insufficient Permission Later
-
       const content = args && args.length ? args.join(' ') : message.content;
-      const resArgs = this.argsHandler.ResolveArgs(content);
+      const resArgs = CodersBot.argsHandler.ResolveArgs(content, this.Usage);
+      
+      for(const flag of resArgs.flags) {
+        if(flag.specialFlag) {
+          const sFlagRun = CodersBot.commandPool.SpecialFlags.get(flag.name);
+          if(!sFlagRun) continue;
+          sFlagRun(CodersBot.Client, resArgs, message, commandInterface, stop);
+        } else if(flag.isRanBeforeCommand) {
+          const rbcFlag = resArgs.flags.getMetadata()?.find(f => f.name === flag.name)?.RunBeforeCommand;
+          if(!rbcFlag) continue;
+          rbcFlag(CodersBot.Client, resArgs, message, commandInterface, stop);
+        } else continue;
+
+        if(stopExec) return;
+      }
+
+      if (!this.CanRun(message, this.CheckAdmin))
+        if (!this.DisablePermissionWarning)
+          return message.reply(
+            `Você não tem permissões suficientes para poder usar este comando. Verifique as permissões necessárias com ${CodersBot.prefix}${this.Name} --perms`
+          );
 
       this.ShowTyping && message.channel.startTyping();
       await Promise.resolve(
-        this._execute(this.client, resArgs, message, {
-          Aliases: this.Aliases,
-          CanRun: this.CanRun,
-          Name: this.Name,
-          Permissions: this.Permissions.validator,
-          Roles: this.Roles.validator,
-          Type: this.Type,
-          ShowTyping: this.ShowTyping,
-          Description: this.Description,
-          ValidationType: this.ValidationType,
-          CheckAdmin: this.CheckAdmin,
-          Usage: this.Usage
-        })
+        this._execute(this.client, resArgs, message, commandInterface)
       );
       this.ShowTyping && message.channel.stopTyping(true);
     } catch (e: unknown) {
       const loggedAt = new Date();
-      const errorMessage = `ERROR AT 'Command.Run', ${(e as Error).stack} - [${loggedAt.toLocaleString(
-        'pt-BR'
-      )}]`;
+      const errorMessage = `ERROR AT 'Command.Run', ${
+        (e as Error).stack
+      } - [${loggedAt.toLocaleString('pt-BR')}]`;
 
       console.error(errorMessage);
     }
@@ -198,7 +228,6 @@ export default class Command<
     const guildMember = message.member;
     if (!guildMember) throw ReferenceError('Guild Member Could Not Be Found.');
     const hasRoles = this.Roles.validate(guildMember, checkAdmin);
-
     const hasPermission = this.Permissions.validate(guildMember, checkAdmin);
 
     return this.ValidationType === EValidationType.PermAndRole

@@ -11,14 +11,15 @@ export interface Flag<Ftype extends FlagType = FlagType> {
   aliases: string[];
   isRanBeforeCommand: boolean;
   description: string | null;
+  specialFlag: boolean;
 }
 
-export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>>, IQueryable<Readonly<Flag>> {
+export class Flags implements ArrayLike<Readonly<Flag>>, IQueryable<Readonly<Flag>> {
   public readonly length: number;
   [index: number]: Readonly<Flag>;
-  private readonly flagsMetadata: Readonly<UsageObject<K>['flags']>;
+  private readonly flagsMetadata: Readonly<UsageObject['flags']>;
 
-  constructor(flagsMetadata: UsageObject<K>['flags'], lookupFlags: Array<TokenArgument>) {
+  constructor(flagsMetadata: UsageObject['flags'], lookupFlags: Array<TokenArgument>) {
     this.flagsMetadata = Object.seal(Object.freeze(flagsMetadata));
     this.toArray = this.toArray.bind(this);
     let flagIndex = 0;
@@ -34,12 +35,14 @@ export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>>, IQ
         const name = flagMetadata.name;
         const aliases = [...(flagMetadata.aliases ?? [])];
         const description = flagMetadata.description ?? null;
+        const specialFlag = !!flagMetadata.SpecialFlag;
 
-        const metaData: Pick<Flag, 'aliases' | 'description' | 'isRanBeforeCommand' | 'name'> = {
+        const metaData: Pick<Flag, 'aliases' | 'description' | 'isRanBeforeCommand' | 'name' | 'specialFlag'> = {
           aliases,
           description,
           isRanBeforeCommand,
-          name
+          name,
+          specialFlag
         };
         lookupFor = [flagMetadata.name, ...(flagMetadata.aliases ?? [])];
 

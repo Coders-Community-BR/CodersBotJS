@@ -16,7 +16,6 @@ export default class RoleValidator extends Validator<Snowflake> {
 
   constructor(validator: ValidateRole, additionalValidator?: Exclude<ValidateRole, ValidadeCallback>) {
     super(validator, additionalValidator);
-
     switch (this.Type) {
       case EValidatorType.Callback:
         this.validate = (this.validator as ValidadeCallback).bind(null);
@@ -35,7 +34,6 @@ export default class RoleValidator extends Validator<Snowflake> {
             roles.OneOf && roles.OneOf.length > 0
               ? roles.OneOf.some((r) => !!member.roles.cache.some((role) => role.id === r))
               : true;
-
           return matchAll && matchOneOf;
         };
         break;

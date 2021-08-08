@@ -3,6 +3,7 @@ import CommandPool from '~/commands/_base/CommandPool';
 import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
 import disbut from 'discord-buttons';
+import ArgsHandler from '~/handlers/args';
 export interface CommandConfig {
   prefix: string;
 }
@@ -57,6 +58,8 @@ class CodersBot {
     }
   }
 
+  public static argsHandler: ArgsHandler
+
   public static commandPool: CommandPool;
 
   public static paths: Record<'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir', string>;
@@ -104,6 +107,10 @@ class CodersBot {
     CodersBot.on = client.on.bind(client);
     CodersBot.once = client.once.bind(client);
     CodersBot.login = client.login.bind(client);
+    CodersBot.argsHandler = new ArgsHandler({
+      splitArgsMatch: /\s+/g,
+      splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g
+    });
     CodersBot.onMessage = (callback) => client.on('message', callback);
   }
 
