@@ -30,3 +30,7 @@ interface IQueryable<T> {
   get(query: IQueryableArgument<T, boolean>): T | null;
   map<R>(selector: Exclude<IQueryableArgument<T, R>, T | string>): Array<R>;
 }
+
+type Indexed<T> = {
+  [key: string | number]: T;
+}

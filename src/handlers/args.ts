@@ -10,10 +10,10 @@ export interface ResolvedArgumentsOptions<T extends keyof any> {
 }
 
 export class ResolvedArguments<T extends keyof any = string>
-  implements ArrayLike<TokenArgument>, IQueryable<TokenArgument>
+  implements ArrayLike<Readonly<TokenArgument>>, IQueryable<Readonly<TokenArgument>>
 {
   public readonly length: number;
-  [index: number]: TokenArgument;
+  [index: number]: Readonly<TokenArgument>;
 
   public readonly flags: Flags<T>;
   public readonly raw: Array<string>;
@@ -36,7 +36,8 @@ export class ResolvedArguments<T extends keyof any = string>
     this.length = argIndex + 1;
   }
 
-  public [Symbol.iterator]: () => IterableIterator<TokenArgument> = Array.prototype.values.bind(this);
+  public [Symbol.iterator]: Func<[], IterableIterator<Readonly<TokenArgument>>> =
+    Array.prototype.values.bind(this);
 
   public toArray() {
     return Array(...this);
@@ -86,7 +87,9 @@ export class ResolvedArguments<T extends keyof any = string>
     return false;
   }
 
-  public map<R>(selector: Exclude<IQueryableArgument<TokenArgument, R>, TokenArgument | string>): Array<R> {
+  public map<R>(
+    selector: Exclude<IQueryableArgument<TokenArgument, R>, TokenArgument | string>
+  ): Array<R> {
     const sel = selector;
     const map: Array<R> = [];
     const arr = Array.from(this);

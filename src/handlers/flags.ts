@@ -1,4 +1,5 @@
 import { UsageObject } from '~/commands/_base/Command';
+import { isFlag, isFunction, isSameValue } from '~/utils/assert';
 import { TokenArgument } from './args';
 
 export type FlagType = string | number | boolean | null;
@@ -12,13 +13,13 @@ export interface Flag<Ftype extends FlagType = FlagType> {
   description: string | null;
 }
 
-export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>> {
+export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>>, IQueryable<Readonly<Flag>> {
   public readonly length: number;
   [index: number]: Readonly<Flag>;
   private readonly flagsMetadata: Readonly<UsageObject<K>['flags']>;
 
   constructor(flagsMetadata: UsageObject<K>['flags'], lookupFlags: Array<TokenArgument>) {
-    this.flagsMetadata = Object.freeze(flagsMetadata);
+    this.flagsMetadata = Object.seal(Object.freeze(flagsMetadata));
     this.toArray = this.toArray.bind(this);
     let flagIndex = 0;
 
@@ -133,7 +134,8 @@ export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>> {
     }
   }
 
-  public [Symbol.iterator] = Array.prototype.values.bind(this);
+  public [Symbol.iterator]: Func<[], IterableIterator<Readonly<Flag>>> =
+    Array.prototype.values.bind(this);
 
   public toArray() {
     return Array(...this);
@@ -141,5 +143,64 @@ export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>> {
 
   public getMetadata() {
     return this.flagsMetadata ?? null;
+  }
+
+  public get(query: IQueryableArgument<Readonly<Flag>, boolean>) {
+    const arg = query;
+
+    if (arg === null || arg === undefined) throw TypeError("'query' is null or undefined");
+
+    if (isFunction(arg)) {
+      const arr = Array.from(this);
+      for (let i = 0; i < arr.length; i++) {
+        const token = arr[i]!;
+        const result = arg(token, i, arr);
+        if (result) return token;
+      }
+    } else if (isFlag(arg)) {
+      for (const token of this)
+        if (isSameValue(arg, token)) return token;
+    } else if (typeof arg === 'string') {
+      for (const token of this) {
+        if(token.name === arg) return token;
+        else if(token.aliases.includes(arg)) return token;
+      }
+    } else throw TypeError("'query' is invalid");
+
+    return null;
+  }
+
+  public has(query: IQueryableArgument<Readonly<Flag>, boolean>) {
+   const arg = query;
+
+   if (arg === null || arg === undefined) throw TypeError("'query' is null or undefined");
+
+   if (isFunction(arg)) {
+     const arr = Array.from(this);
+     for (let i = 0; i < arr.length; i++) {
+       const token = arr[i]!;
+       const result = arg(token, i, arr);
+       if (result) return true;
+     }
+   } else if (isFlag(arg)) {
+     for (const token of this) if (isSameValue(arg, token)) return true;
+   } else if (typeof arg === 'string') {
+     for (const token of this) {
+       if (token.name === arg) return true;
+       else if (token.aliases.includes(arg)) return true;
+     }
+   } else throw TypeError("'query' is invalid");
+
+   return false;
+  }
+
+  public map<R>(
+    selector: Exclude<IQueryableArgument<Readonly<Flag>, R>, Readonly<Flag> | string>
+  ): Array<R> {
+    const sel = selector;
+    const map: Array<R> = [];
+    const arr = Array.from(this);
+    for (let i = 0; i < arr.length; i++) map.push(sel(arr[i]!, i, arr));
+    return map;
   }
 }
