@@ -27,8 +27,6 @@ export default {
     Execute: async (client, args, message, _command) => {
         const sentAt = message.createdTimestamp;
 
-        console.log(args, '\n\n');
-
         const sendMsg = new MessageEmbed()
             .setTitle('Pong!')
             .setDescription('Ping Recebido E Retornado.')

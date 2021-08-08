@@ -15,13 +15,12 @@ import MessageHandler from './handlers/message';
 
 export default async function Startup() {
     CodersBot.init(botConfig as ClientOptions, cmdConfig as CommandConfig);
-
     CodersBot.loadPaths();
 
     CodersBot.ErrorLogger = new LogHandler({
         id: 'error',
         level: ELogsHandlerLevel.Verbose,
-        path: CodersBot.paths.logsDir,
+        path: CodersBot.paths.logsDir
     });
 
     await CodersBot.loadCommands();

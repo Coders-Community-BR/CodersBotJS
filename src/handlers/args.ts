@@ -1,4 +1,6 @@
 import { UsageObject } from '~/commands/_base/Command';
+import { isFunction, isTokenArgument } from '~/utils/assert';
+import { Flags } from './flags';
 import Handler from './_base';
 
 export interface ResolvedArgumentsOptions<T extends keyof any> {
@@ -7,7 +9,9 @@ export interface ResolvedArgumentsOptions<T extends keyof any> {
     raw: Array<string>;
 }
 
-export class ResolvedArguments<T extends keyof any = string> implements ArrayLike<TokenArgument> {
+export class ResolvedArguments<T extends keyof any = string>
+    implements ArrayLike<TokenArgument>, IQueryable<TokenArgument>
+{
     public readonly length: number;
     [index: number]: TokenArgument;
 
@@ -24,7 +28,7 @@ export class ResolvedArguments<T extends keyof any = string> implements ArrayLik
 
             argIndex = i;
 
-            this[i] = { ...arg };
+            this[i] = Object.seal(Object.freeze(arg));
         }
 
         this.flags = flags;
@@ -32,32 +36,66 @@ export class ResolvedArguments<T extends keyof any = string> implements ArrayLik
         this.length = argIndex + 1;
     }
 
-    public [Symbol.iterator] = Array.prototype.values.bind(this)
+    public [Symbol.iterator]: () => IterableIterator<TokenArgument> =
+        Array.prototype.values.bind(this);
 
     public toArray() {
         return Array(...this);
     }
-}
 
-// export class ResolvedArguments<T extends keyof any> implements ArrayLike<string> {
-//     constructor()
-// }
+    public get(query: IQueryableArgument<TokenArgument, boolean>) {
+        const arg = query;
 
-export type FlagType = string | number | boolean | null;
+        if (arg === null || arg === undefined) throw TypeError("'query' is null or undefined");
 
-export interface Flag<Ftype extends FlagType = FlagType> {
-    name: string;
-    value: Ftype;
-    matchesType: boolean;
-    aliases: string[];
-    isRanBeforeCommand: boolean;
-    description: string | null;
-}
+        if (isFunction(arg)) {
+            const arr = Array.from(this);
+            for (let i = 0; i < arr.length; i++) {
+                const token = arr[i]!;
+                const result = arg(token, i, arr);
+                if (result) return token;
+            }
+        } else if (isTokenArgument(arg)) {
+            for (const token of this)
+                if (arg.content === token.content && arg.isQuoted === token.isQuoted) return token;
+        } else if (typeof arg === 'string') {
+            for (const token of this) if (token.content === arg) return token;
+        } else throw TypeError("'query' is invalid");
 
-export function IsArrayOfArray<T = any>(x: unknown): x is Array<Array<T>> {
-    const arr = x as Array<Array<T>>;
+        return null;
+    }
 
-    return arr !== undefined && arr !== null && arr[0] instanceof Array;
+    public has(query: IQueryableArgument<TokenArgument, boolean>) {
+        const arg = query;
+
+        if (arg === null || arg === undefined) throw TypeError("'query' is null or undefined");
+
+        if (isFunction(arg)) {
+            const arr = Array.from(this);
+            for (let i = 0; i < arr.length; i++) {
+                const token = arr[i]!;
+                const result = arg(token, i, arr);
+                if (result) return true;
+            }
+        } else if (isTokenArgument(arg)) {
+            for (const token of this)
+                if (arg.content === token.content && arg.isQuoted === token.isQuoted) return true;
+        } else if (typeof arg === 'string') {
+            for (const token of this) if (token.content === arg) return true;
+        } else throw TypeError("'query' is invalid");
+
+        return false;
+    }
+
+    public map<R>(
+        selector: Exclude<IQueryableArgument<TokenArgument, R>, TokenArgument | string>
+    ): Array<R> {
+        const sel = selector;
+        const map: Array<R> = [];
+        const arr = Array.from(this);
+        for (let i = 0; i < arr.length; i++) map.push(sel(arr[i]!, i, arr));
+        return map;
+    }
 }
 
 export class TokenArgument {
@@ -68,143 +106,6 @@ export class TokenArgument {
 
     public readonly content: string;
     public readonly isQuoted: boolean;
-}
-
-export class Flags<K extends keyof any> implements ArrayLike<Readonly<Flag>> {
-    public readonly length: number;
-    [index: number]: Readonly<Flag>;
-    private readonly flagsMetadata: Readonly<UsageObject<K>['flags']>;
-
-    constructor(flagsMetadata: UsageObject<K>['flags'], lookupFlags: Array<TokenArgument>) {
-        this.flagsMetadata = Object.freeze(flagsMetadata);
-        this.toArray = this.toArray.bind(this);
-        let flagIndex = 0;
-
-        if (this.flagsMetadata) {
-            const flagMetadataLength = this.flagsMetadata?.length ?? 0;
-            iterateMetadata: for (let i = 0; i < flagMetadataLength; i++) {
-                const flagMetadata = this.flagsMetadata[i];
-                let lookupFor: Array<string> = [];
-
-                if (!flagMetadata) continue iterateMetadata;
-                const isRanBeforeCommand = typeof flagMetadata.RunBeforeCommand === 'function';
-                const name = flagMetadata.name;
-                const aliases = [...(flagMetadata.aliases ?? [])];
-                const description = flagMetadata.description ?? null;
-
-                const metaData: Pick<
-                    Flag,
-                    'aliases' | 'description' | 'isRanBeforeCommand' | 'name'
-                > = {
-                    aliases,
-                    description,
-                    isRanBeforeCommand,
-                    name,
-                };
-                lookupFor = [flagMetadata.name, ...(flagMetadata.aliases ?? [])];
-
-                iterateArgs: for (const lookup of lookupFlags) {
-                    if (!lookup) continue iterateArgs;
-
-                    const j = lookupFlags.indexOf(lookup);
-
-                    if (!lookup.isQuoted) {
-                        if (lookupFor.includes(lookup.content)) {
-                            lookupFlags.splice(j, 1);
-
-                            const type = flagMetadata.type;
-                            switch (type) {
-                                case 'boolean':
-                                    {
-                                        const flag: Flag<true> = {
-                                            matchesType: true,
-                                            value: true,
-                                            ...metaData,
-                                        };
-                                        this[flagIndex] = flag;
-
-                                        flagIndex++;
-                                    }
-                                    break;
-                                case 'number':
-                                    {
-                                        const lookupValue = lookupFlags.splice(j, 1)[0];
-                                        if (lookupValue) {
-                                            const tryParseValue = parseFloat(lookupValue.content);
-
-                                            const value = isNaN(tryParseValue)
-                                                ? lookupValue.content
-                                                : tryParseValue;
-
-                                            const flag: Flag<typeof value> = {
-                                                ...metaData,
-                                                matchesType: value === tryParseValue,
-                                                value,
-                                            };
-
-                                            this[flagIndex] = flag;
-                                            flagIndex++;
-                                        } else {
-                                            const flag: Flag = {
-                                                ...metaData,
-                                                matchesType: false,
-                                                value: null,
-                                            };
-
-                                            this[flagIndex] = flag;
-                                            flagIndex++;
-                                        }
-                                    }
-                                    break;
-                                case 'string':
-                                    {
-                                        const lookupValue = lookupFlags.splice(j,1)[0];
-
-                                        if (lookupValue) {
-                                            const value = lookupValue.content;
-
-                                            const flag: Flag<typeof value> = {
-                                                ...metaData,
-                                                matchesType: true,
-                                                value,
-                                            };
-
-                                            this[flagIndex] = flag;
-                                            flagIndex++;
-                                        } else {
-                                            const flag: Flag = {
-                                                ...metaData,
-                                                matchesType: false,
-                                                value: null,
-                                            };
-
-                                            this[flagIndex] = flag;
-                                            flagIndex++;
-                                        }
-                                    }
-                                    break;
-                            }
-
-                            continue iterateMetadata;
-                        } else continue iterateArgs;
-                    }
-                }
-            }
-            this.length = flagIndex;
-        } else {
-            this.length = 0;
-        }
-    }
-
-    public [Symbol.iterator] = Array.prototype.values.bind(this);
-
-    public toArray() {
-        return Array(...this);
-    }
-
-    public getMetadata() {
-        return this.flagsMetadata ?? null;
-    }
 }
 
 export interface ArgsHandlerOptions<Flags extends keyof any = string> {
@@ -239,7 +140,7 @@ export default class ArgsHandler<TFlags extends keyof any = string> extends Hand
                 }
 
                 if (i % 2 === 1) {
-                    result = curr.split(this.config.splitArgsMatch).filter(v => v !== '');
+                    result = curr.split(this.config.splitArgsMatch).filter((v) => v !== '');
                     lookupFlags.push(...Array.from(result, (l) => new TokenArgument(l)));
                 } else {
                     if (curr !== '') {
@@ -257,7 +158,7 @@ export default class ArgsHandler<TFlags extends keyof any = string> extends Hand
         return new ResolvedArguments<TFlags>({
             args: lookupFlags,
             flags,
-            raw: rawArgs,
+            raw: rawArgs
         });
     }
 }
