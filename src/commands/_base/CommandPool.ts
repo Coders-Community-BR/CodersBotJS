@@ -6,97 +6,96 @@ import { resolve } from '~/utils';
 import Command, { CommandOptions } from './Command';
 
 export default class CommandPool {
-    private ErrorLogger: LogHandler;
+  private ErrorLogger: LogHandler;
 
-    private _commands: Map<string, Command>;
-    public path: string;
+  private _commands: Map<string, Command>;
+  public path: string;
 
-    constructor(path: string) {
-        this.path = path;
-        this.ErrorLogger = CodersBot.ErrorLogger;
-        this._commands = new Map();
-    }
+  constructor(path: string) {
+    this.path = path;
+    this.ErrorLogger = CodersBot.ErrorLogger;
+    this._commands = new Map();
+  }
 
-    public async seed() {
-        const dir = await opendir(this.path);
+  public async seed() {
+    const dir = await opendir(this.path);
 
-        let file: Dirent | null = await dir.read();
-        while (file !== null) {
-            if (file.isFile()) {
-                const fName = file.name;
+    let file: Dirent | null = await dir.read();
+    while (file !== null) {
+      if (file.isFile()) {
+        const fName = file.name;
 
-                const commandOpts = (await import(resolve(this.path, fName)))
-                    .default as CommandOptions;
-                let command: Command;
-                switch (commandOpts.Type) {
-                    default:
-                        command = new Command(commandOpts, CodersBot.Client);
-                }
+        const commandOpts = (await import(resolve(this.path, fName))).default as CommandOptions;
+        let command: Command;
+        switch (commandOpts.Type) {
+          default:
+            command = new Command(commandOpts, CodersBot.Client);
+        }
 
-                if (this._commands.has(commandOpts.Name)) {
-                    console.error(`COMMAND NAME OVERLAPS: ${commandOpts.Name}`);
-                    process.exit(1);
-                }
+        if (this._commands.has(commandOpts.Name)) {
+          console.error(`COMMAND NAME OVERLAPS: ${commandOpts.Name}`);
+          process.exit(1);
+        }
 
-                this._commands.set(commandOpts.Name, command);
+        this._commands.set(commandOpts.Name, command);
 
-                if (commandOpts.Aliases) {
-                    for (const alias of commandOpts.Aliases) {
-                        if (this._commands.has(alias)) {
-                            console.error(`COMMAND ALIAS OVERLAPS: ${alias}`);
-                            process.exit(1);
-                        }
-
-                        this._commands.set(alias, command);
-                    }
-                }
+        if (commandOpts.Aliases) {
+          for (const alias of commandOpts.Aliases) {
+            if (this._commands.has(alias)) {
+              console.error(`COMMAND ALIAS OVERLAPS: ${alias}`);
+              process.exit(1);
             }
 
-            file = await dir.read();
+            this._commands.set(alias, command);
+          }
         }
+      }
 
-        await dir.close();
+      file = await dir.read();
     }
 
-    /**
-     * Update Later
-     * @param key Name or Alias
-     */
-    public get(key: string) {
-        return this._commands.get(key) ?? null;
+    await dir.close();
+  }
+
+  /**
+   * Update Later
+   * @param key Name or Alias
+   */
+  public get(key: string) {
+    return this._commands.get(key) ?? null;
+  }
+
+  public toArray(limit?: number) {
+    const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
+    const commandArray = new Array<Command>(arrayLimit);
+
+    const cmdIterator = this._commands.values();
+
+    for (let i = 0; i < arrayLimit; i++) {
+      const result = cmdIterator.next();
+
+      if (result.done) break;
+
+      commandArray[i] = result.value;
     }
 
-    public toArray(limit?: number) {
-        const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
-        const commandArray = new Array<Command>(arrayLimit);
+    return commandArray;
+  }
 
-        const cmdIterator = this._commands.values();
+  public Select<Tresult>(callback: (command: Command) => Tresult, limit?: number) {
+    const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
+    const commandArray = new Array<Tresult>(arrayLimit);
 
-        for (let i = 0; i < arrayLimit; i++) {
-            const result = cmdIterator.next();
+    const cmdIterator = this._commands.values();
 
-            if (result.done) break;
+    for (let i = 0; i < arrayLimit; i++) {
+      const result = cmdIterator.next();
 
-            commandArray[i] = result.value;
-        }
+      if (result.done) break;
 
-        return commandArray;
+      commandArray[i] = callback(result.value);
     }
 
-    public Select<Tresult>(callback: (command: Command) => Tresult, limit?: number) {
-        const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
-        const commandArray = new Array<Tresult>(arrayLimit);
-
-        const cmdIterator = this._commands.values();
-
-        for (let i = 0; i < arrayLimit; i++) {
-            const result = cmdIterator.next();
-
-            if (result.done) break;
-
-            commandArray[i] = callback(result.value);
-        }
-
-        return commandArray;
-    }
+    return commandArray;
+  }
 }
