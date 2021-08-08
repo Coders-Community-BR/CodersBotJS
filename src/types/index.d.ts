@@ -13,3 +13,16 @@ type SystemError = {
     port?: number;
     syscall: string;
 }
+
+type Func<Input, Output> = (...args: Input) => Output;
+
+type IQueryableArgument<TInput, TResult = never> =
+    | TInput
+    | Func<[token: TInput, index: number, array: Array<TInput>], TResult>
+    | string;
+
+interface IQueryable<T> {
+    has(query: IQueryableArgument<T, boolean>): boolean;
+    get(query: IQueryableArgument<T, boolean>): T | null;
+    map<R>(selector: Exclude<IQueryableArgument<T, R>, T | string>): Array<R>;
+}
