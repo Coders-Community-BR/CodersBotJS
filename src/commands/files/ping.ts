@@ -6,7 +6,7 @@ const Usage = {
     flags: [
         {
             name: '--help',
-            type: 'boolean',
+            type: 'boolean'
         },
         {
             name: '--test',
@@ -14,7 +14,7 @@ const Usage = {
             description: 'testtt',
             aliases: ['-t']
         } as UsageFlag
-    ],
+    ]
 };
 
 export default {
@@ -28,23 +28,23 @@ export default {
         const sentAt = message.createdTimestamp;
 
         console.log(args, '\n\n');
-        
+
         const sendMsg = new MessageEmbed()
             .setTitle('Pong!')
             .setDescription('Ping Recebido E Retornado.')
             .addField('🌐 • Ping Da WebSocket', client.ws.ping + 'ms');
 
         const m = await message.reply({
-            content: 'Pinging...',
+            content: 'Pinging...'
         });
 
         sendMsg.addField('⏳ • Ping Da Resposta', m.createdTimestamp - sentAt + 'ms');
 
         await m.edit({
             content: '',
-            embed: sendMsg,
+            embed: sendMsg
         });
     },
     Type: ECommandType._Base,
-    ShowTyping: true,
+    ShowTyping: true
 } as CommandOptions<ElementOf<typeof Usage['flags']>['name']>;
