@@ -3,7 +3,10 @@
         "es6": true,
         "node": true
     },
-    "extends": [ "eslint:recommended", "plugin:@typescript-eslint/recommended" ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
@@ -13,14 +16,25 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
-    "plugins": [ "@typescript-eslint" ],
+    "plugins": [
+        "@typescript-eslint"
+    ],
     "rules": {
         "@typescript-eslint/no-empty-function": "warn",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "prefer-const": "warn",
-        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-        "no-empty": ["warn"]
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "no-empty": [
+            "warn"
+        ],
+        "@typescript-eslint/no-non-null-assertion": "off"
     },
     "settings": {
         "import/resolver": {

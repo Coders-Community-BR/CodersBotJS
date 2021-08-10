@@ -6,5 +6,5 @@ import CodersBot from '~/CodersBot';
  * @param path Path Relative To Root
  */
 export function resolve(...paths: Array<string>) {
-    return _resolve(CodersBot.cwd, ...paths);
+  return _resolve(CodersBot.cwd, ...paths);
 }
