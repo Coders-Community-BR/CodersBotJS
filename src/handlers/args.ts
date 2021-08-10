@@ -128,8 +128,8 @@ export default class ArgsHandler extends Handler<
     const firstArg = splitQuotedArgs.shift() ?? '';
 
     if (splitQuotedArgs.length === 0) splitQuotedArgs.push('');
-
-    const rawArgs = splitQuotedArgs
+    const raw = content.split(/\s+/g);
+    const quoteProcessedArgs = splitQuotedArgs
       .reduce((prev, curr, i) => {
         let result: Array<string> = [];
         if (i === 0 && prev.length > 1) {
@@ -155,7 +155,7 @@ export default class ArgsHandler extends Handler<
     return new ResolvedArguments({
       args: lookupFlags,
       flags,
-      raw: rawArgs
+      raw
     });
   }
 }
