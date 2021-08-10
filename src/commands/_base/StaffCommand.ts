@@ -1,4 +1,5 @@
 import { Client } from 'discord.js';
+import CodersBot from '~/CodersBot';
 import RoleValidator from '../auth/Roles';
 import Command, { CommandOptions } from './Command';
 
@@ -10,7 +11,7 @@ export default class StaffCommand<
     super(options, client);
 
     this.Roles = new RoleValidator(options.Roles ?? [], {
-      OneOf: ['864595114214555668']
+      OneOf: CodersBot.StaffRoles
     });
   }
 }

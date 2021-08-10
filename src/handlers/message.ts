@@ -2,6 +2,7 @@ import { Message } from 'discord.js';
 import CodersBot from '~/CodersBot';
 import LogHandler, { ELogsHandlerLevel } from './logs';
 import Handler from './_base';
+import TestConfig from '~/config/test.config';
 
 export interface MessageHandlerConfig {
   prefix: string;
@@ -23,15 +24,21 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
 
   public async listener(message: Message) {
     this.logger.WriteLine(
-      `MESSAGE: '${message.content}'\n\tsent by [${message.author.id}:${message.author.username}]\n\tin [${
-        message.channel.id
-      }:${message.guild?.name ?? message.author.username}]\n\tat [${new Date().toLocaleString('pt-BR')}]`
+      `MESSAGE: '${message.content}'\n\tsent by [${message.author.id}:${
+        message.author.username
+      }]\n\tin [${message.channel.id}:${
+        message.guild?.name ?? message.author.username
+      }]\n\tat [${new Date().toLocaleString('pt-BR')}]`
     );
-    /*
 
-        Implementar Algum Analisador?
+    if (
+      TestConfig.filterTesters &&
+      TestConfig.filterTesters.length > 0 &&
+      !TestConfig.filterTesters.includes(message.author.id) ||
+      TestConfig.testing && CodersBot.StaffRoles.every(r => !message.member?.roles.cache.has(r))
+    )
+      return;
 
-        */
     if (message.content.trim() === `<@!${CodersBot.Client.user?.id}>`) {
       return message.reply(
         `O meu prefixo é \`${this.config.prefix}\`. Você pode ver os comandos disponíveis com \`${this.config.prefix}help\``

@@ -25,51 +25,68 @@ export default class CommandPool {
     this._commands = new Map();
     this.SpecialFlags = new Map();
 
+    this.loadSpecialFlags();
+  }
+  
+  private loadSpecialFlags() {
     this.SpecialFlags.set('--permissions', (client, args, message, command, stop) => {
       const canRun = command.CanRun(message);
-      const validationText =
-        command.ValidationType === EValidationType.PermAndRole ? ' e ' : ' ou ';
+      const validationText = command.ValidationType === EValidationType.PermAndRole ? 'e ' : 'ou ';
       let permissionText = '';
       if (command.Permissions instanceof Array) {
         permissionText +=
           command.Permissions.length === 0
-            ? `Nenhuma Permissão Necessária `
-            : `Permissões Necessárias: \`${command.Permissions.join(', ')}\` `;
+            ? `Nenhuma permissão necessária `
+            : `Permissões necessárias: \`${command.Permissions.join(', ')}\` `;
       } else if (isValidatorLogicalObject(command.Permissions)) {
         command.Permissions.All &&
           command.Permissions.All.length > 0 &&
-          (permissionText += `Permissões Necessárias: \`${command.Permissions.All.join(', ')}\` `);
+          (permissionText += `Permissões necessárias: \`${command.Permissions.All.join(', ')}\` `);
 
         command.Permissions.OneOf &&
           command.Permissions.OneOf.length > 0 &&
-          (permissionText += `É Necessário ter uma entre essas permissões: \`${command.Permissions.OneOf.join(
+          (permissionText += `É necessário ter uma entre essas permissões: \`${command.Permissions.OneOf.join(
             ', '
           )}\` `);
 
-        permissionText.length === 0 && (permissionText += `Nenhuma Permissão Necessária `);
+        permissionText.length === 0 && (permissionText += `Nenhuma permissão necessária `);
       } else permissionText += 'As permissões foram sobrescritas ';
 
       let rolesText = '';
       if (command.Roles instanceof Array) {
         rolesText +=
           command.Roles.length === 0
-            ? `Nenhum Cargo Necessário `
-            : `Cargos Necessários: \`${command.Roles.join(', ')}\` `;
+            ? `nenhum cargo necessário `
+            : `cargos necessários: \`${command.Roles.map(
+                (r) => message.guild?.roles.cache.get(r)?.name
+              )
+                .filter((r) => Boolean(r))
+                .join(', ')}\` `;
       } else if (isValidatorLogicalObject(command.Roles)) {
         command.Roles.All &&
           command.Roles.All.length > 0 &&
-          (rolesText += `Cargos Necessários: \`${command.Roles.All.map(r => message.guild?.roles.cache.get(r)).join(', ')}\` `);
+          (rolesText += `cargos Necessários: \`${command.Roles.All.map(
+            (r) => message.guild?.roles.cache.get(r)?.name
+          )
+            .filter((r) => Boolean(r))
+            .join(', ')}\` `);
 
         command.Roles.OneOf &&
           command.Roles.OneOf.length > 0 &&
-          (rolesText += `É Necessário ter um entre esses cargos: \`${command.Roles.OneOf.join(
-            ', '
-          )}\` `);
+          (rolesText += `é necessário ter um entre esses cargos: \`${command.Roles.OneOf.map(
+            (r) => message.guild?.roles.cache.get(r)?.name
+          )
+            .filter((r) => Boolean(r))
+            .join(', ')}\` `);
 
-        rolesText.length === 0 && (rolesText += `Nenhum Cargo Necessário `);
-      } else rolesText += 'Os cargos foram sobrescritos ';
+        rolesText.length === 0 && (rolesText += `nenhum cargo necessário `);
+      } else rolesText += 'os cargos foram sobrescritos ';
 
-      const result = `Você ${canRun ? '' : 'não '}pode usar este comando. ` + permissionText + validationText + rolesText;
+      const result =
+        `Você ${canRun ? '' : 'não '}pode usar este comando. ` +
+        permissionText +
+        validationText +
+        rolesText;
 
       message.reply({
         content: result
@@ -184,16 +201,16 @@ export default class CommandPool {
 
   public Select<Tresult>(callback: (command: Command) => Tresult, limit?: number) {
     const arrayLimit = limit && limit < this._commands.size ? limit : this._commands.size;
-    const commandArray = new Array<Tresult>(arrayLimit);
-
-    const cmdIterator = this._commands.values();
+    const commandArray = new Array<Tresult>();
+    const cmdIterator = this._commands.entries();
 
     for (let i = 0; i < arrayLimit; i++) {
       const result = cmdIterator.next();
 
       if (result.done) break;
+      if (result.value[1].Name !== result.value[0]) continue;
 
-      commandArray[i] = callback(result.value);
+      commandArray.push(callback(result.value[1]));
     }
 
     return commandArray;

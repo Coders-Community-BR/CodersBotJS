@@ -29,9 +29,9 @@ class CodersBot {
         logsDir
       };
     } catch (e: unknown) {
-      const msgError = `ERROR AT LOADING PATHS: ${(e as Error).stack} - [${new Date().toLocaleString(
-        'pt-BR'
-      )}]`;
+      const msgError = `ERROR AT LOADING PATHS: ${
+        (e as Error).stack
+      } - [${new Date().toLocaleString('pt-BR')}]`;
       CodersBot.ErrorLogger.WriteLine(msgError);
       console.error(msgError);
     }
@@ -58,13 +58,23 @@ class CodersBot {
     }
   }
 
-  public static argsHandler: ArgsHandler
+  public static argsHandler: ArgsHandler;
 
   public static commandPool: CommandPool;
 
-  public static paths: Record<'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir', string>;
+  public static paths: Record<
+    'configDir' | 'srcDir' | 'commandFilesDir' | 'commandsDir' | 'logsDir',
+    string
+  >;
   public static ErrorLogger: LogHandler;
   public static prefix: string;
+
+  public static readonly StaffRoles = [
+    '839624745262514176',
+    '847891692296077342',
+    '853307486688772116',
+    '830084026454900738'
+  ];
 
   public static defaultEmbedOptions: MessageEmbedOptions;
 
@@ -99,6 +109,7 @@ class CodersBot {
     };
 
     const client = new Client(botConfig);
+
     disbut(client);
 
     if (CodersBot.once_ready) client.once('ready', CodersBot.once_ready);
@@ -107,6 +118,7 @@ class CodersBot {
     CodersBot.on = client.on.bind(client);
     CodersBot.once = client.once.bind(client);
     CodersBot.login = client.login.bind(client);
+
     CodersBot.argsHandler = new ArgsHandler({
       splitArgsMatch: /\s+/g,
       splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g
