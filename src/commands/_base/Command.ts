@@ -209,11 +209,11 @@ export default class Command<
             `Você não tem permissões suficientes para poder usar este comando. Verifique as permissões necessárias com ${CodersBot.prefix}${this.Name} --perms`
           );
 
-      this.ShowTyping && message.channel.startTyping();
+      this.ShowTyping && message.channel.sendTyping();
       await Promise.resolve(
         this._execute(this.client, resArgs, message, commandInterface)
       );
-      this.ShowTyping && message.channel.stopTyping(true);
+      this.ShowTyping && message.channel.sendTyping();
     } catch (e: unknown) {
       const loggedAt = new Date();
       const errorMessage = `ERROR AT 'Command.Run', ${

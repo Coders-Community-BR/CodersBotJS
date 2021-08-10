@@ -8,9 +8,9 @@ export default {
   Usage: {},
   Execute: async (_client, _args, message, _command) => {
     const commands = CodersBot.commandPool.Select((c) => ({
-      Name: c.Name,
-      Aliases: [...c.Aliases],
-      Description: c.Description
+          Name: c.Name,
+          Aliases: [...c.Aliases],
+          Description: c.Description
     }));
 
     const msg = new MessageEmbed().setTitle('Comandos').setDescription('Lista De Comandos Do Bot');
@@ -22,12 +22,10 @@ export default {
     if (CodersBot.defaultEmbedOptions.image?.url) {
       msg.setThumbnail(CodersBot.defaultEmbedOptions.image.url);
     }
-
-    for (let i = 0; i < commands.length; i++) {
-      msg.addField(CodersBot.prefix + commands[i]?.Name, commands[i]?.Description);
-    }
-
-    message.channel.send(msg);
+   for (const command of commands)
+      msg.addField(`${CodersBot.prefix}${command?.Name}`, command?.Description);
+  
+    message.reply({embeds: [msg]});
   },
   Description: 'Lista Os Comandos Do Bot'
 } as CommandOptions;

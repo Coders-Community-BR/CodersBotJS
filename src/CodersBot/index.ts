@@ -4,6 +4,7 @@ import LogHandler from '~/handlers/logs';
 import { resolve } from '~/utils';
 import disbut from 'discord-buttons';
 import ArgsHandler from '~/handlers/args';
+
 export interface CommandConfig {
   prefix: string;
 }
@@ -40,6 +41,7 @@ class CodersBot {
   public static async loadCommands() {
     try {
       this.commandPool = new CommandPool(CodersBot.paths.commandFilesDir);
+
       await this.commandPool.seed();
     } catch (e) {
       const msgError = `ERROR AT LOADING COMMAND POOL ${
@@ -73,7 +75,8 @@ class CodersBot {
     '839624745262514176',
     '847891692296077342',
     '853307486688772116',
-    '830084026454900738'
+    '830084026454900738',
+    '864595114214555668'
   ];
 
   public static defaultEmbedOptions: MessageEmbedOptions;
@@ -108,9 +111,7 @@ class CodersBot {
       }
     };
 
-    const client = new Client(botConfig);
-
-    disbut(client);
+    const client = new Client(botConfig as ClientOptions);
 
     if (CodersBot.once_ready) client.once('ready', CodersBot.once_ready);
 
@@ -123,7 +124,7 @@ class CodersBot {
       splitArgsMatch: /\s+/g,
       splitQuoted: /\s*'((?:(?!').)+)'\s*|\s*"((?:(?!").)+)"\s*/g
     });
-    CodersBot.onMessage = (callback) => client.on('message', callback);
+    CodersBot.onMessage = (callback) => client.on('messageCreate', callback);
   }
 
   constructor() {

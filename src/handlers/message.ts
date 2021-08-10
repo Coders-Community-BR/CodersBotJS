@@ -30,7 +30,6 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
         message.guild?.name ?? message.author.username
       }]\n\tat [${new Date().toLocaleString('pt-BR')}]`
     );
-
     if (
       TestConfig.filterTesters &&
       TestConfig.filterTesters.length > 0 &&
