@@ -22,12 +22,6 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
     }
 
     public async listener(message: Message) {
-        /*
-
-    Implementar Algum Analisador?
-
-    */
-
         this.logger.WriteLine(
             `MESSAGE: '${message.content}'\n\tsent by [${message.author.id}:${
                 message.author.username
@@ -35,6 +29,16 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
                 message.guild?.name ?? message.author.username
             }]\n\tat [${new Date().toLocaleString('pt-BR')}]`
         );
+        /*
+
+        Implementar Algum Analisador?
+
+        */
+        if (message.content.trim() === `<@!${CodersBot.Client.user?.id}>`) {
+            return message.reply(
+                `O meu prefixo é \`${this.config.prefix}\`. Você pode ver os comandos disponíveis com \`${this.config.prefix}help\``
+            );
+        }
 
         if (message.author.bot || !message.content.startsWith(this.config.prefix)) return;
 

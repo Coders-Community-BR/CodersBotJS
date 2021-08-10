@@ -2,10 +2,13 @@ const startedAt = new Date();
 
 import { ClientOptions } from 'discord.js';
 import dotenv from 'dotenv';
-dotenv.config();
+import { resolve } from './utils';
+dotenv.config({
+    path: resolve('.env')
+});
 
-import botConfig from '../config/bot.config';
-import cmdConfig from '../config/command.config';
+import botConfig from './config/bot.config';
+import cmdConfig from './config/command.config';
 import CodersBot, { CommandConfig } from './CodersBot';
 import LogHandler, { ELogsHandlerLevel } from './handlers/logs';
 import MessageHandler from './handlers/message';

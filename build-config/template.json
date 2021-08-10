@@ -26,21 +26,8 @@
     "discord.js": "^12.5.3",
     "dotenv": "^10.0.0"
   },
-  "devDependencies": {
-    "@types/node": "^16.4.4",
-    "@typescript-eslint/eslint-plugin": "^4.28.5",
-    "@typescript-eslint/parser": "^4.28.5",
-    "eslint": "^7.31.0",
-    "eslint-import-resolver-typescript": "^2.4.0",
-    "eslint-plugin-import": "^2.23.4",
-    "ts-node-dev": "^1.1.8",
-    "tsconfig-paths": "^3.10.1",
-    "typescript": "^4.4.0-beta"
-  },
   "scripts": {
-    "build": "node -e \"const f=require('fs');const p=require('path');f.rm(p.resolve(process.cwd(),'dist'),{force:!0,recursive:!0,retryDelay:1e3,maxRetries:3},()=>{})\"&&tsc --project tsconfig.build.json&&cd build-config&&node build.js",
-    "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules index.ts",
-    "cpuprofile": "tsc --generateCpuProfile tsc-output.cpuprofile"
+    "start": "node -r ../build-config/paths-register.js index.js"
   },
   "engines": {
     "node": ">=12.x.x"
