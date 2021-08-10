@@ -105,3 +105,6 @@ dist
 
 # CPU Profile
 *.cpuprofile
+
+# Bot Tests
+test.config.js
