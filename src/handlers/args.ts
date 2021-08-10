@@ -113,9 +113,7 @@ export interface ArgsHandlerOptions {
   splitQuoted: string | RegExp;
 }
 
-export default class ArgsHandler extends Handler<
-  ArgsHandlerOptions
-> {
+export default class ArgsHandler extends Handler<ArgsHandlerOptions> {
   constructor(options: ArgsHandlerOptions) {
     super(options);
 
@@ -128,8 +126,8 @@ export default class ArgsHandler extends Handler<
     const firstArg = splitQuotedArgs.shift() ?? '';
 
     if (splitQuotedArgs.length === 0) splitQuotedArgs.push('');
-    const raw = content.split(/\s+/g);
-    const quoteProcessedArgs = splitQuotedArgs
+    const raw = content.split(/\s+/g).slice(1);
+    splitQuotedArgs
       .reduce((prev, curr, i) => {
         let result: Array<string> = [];
         if (i === 0 && prev.length > 1) {
