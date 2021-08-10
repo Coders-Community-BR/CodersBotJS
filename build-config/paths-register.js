@@ -4,6 +4,6 @@ const { compilerOptions } = require('../tsconfig.json');
 const { register } = require('tsconfig-paths');
 
 register({
-    baseUrl: '../dist/',
-    paths: compilerOptions.paths,
+  baseUrl: '../dist/',
+  paths: compilerOptions.paths
 });
