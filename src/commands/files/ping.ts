@@ -19,10 +19,9 @@ export default {
       content: 'Pinging...'
     });
     sendMsg.addField('⏳ • Ping Da Resposta', m.createdTimestamp - sentAt + 'ms');
-
     await m.edit({
-      content: '',
-      embed: sendMsg
+      content: null,
+      embeds: [sendMsg]
     });
   },
   Type: ECommandType.Staff,

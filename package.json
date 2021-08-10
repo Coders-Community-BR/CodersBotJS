@@ -23,7 +23,7 @@
   "private": true,
   "dependencies": {
     "discord-buttons": "^4.0.0",
-    "discord.js": "^12.5.3",
+    "discord.js": "13",
     "dotenv": "^10.0.0",
     "linq4js": "^2.2.3"
   },
@@ -34,6 +34,7 @@
     "eslint": "^7.31.0",
     "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-import": "^2.23.4",
+    "prettier": "^2.3.2",
     "ts-node-dev": "^1.1.8",
     "tsconfig-paths": "^3.10.1",
     "typescript": "^4.4.0-beta"

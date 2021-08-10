@@ -22,7 +22,7 @@ export default class RoleValidator extends Validator<Snowflake> {
         break;
       case EValidatorType.Object:
         this.validate = (member, checkAdmin = true) => {
-          if (checkAdmin && member.hasPermission('ADMINISTRATOR')) return true;
+          if (checkAdmin && member.permissions.has('ADMINISTRATOR')) return true;
 
           const roles = this.validator as LogicalObject<Snowflake>;
 
@@ -39,7 +39,7 @@ export default class RoleValidator extends Validator<Snowflake> {
         break;
       case EValidatorType.Array:
         this.validate = (member, checkAdmin = true) => {
-          if (checkAdmin && member.hasPermission('ADMINISTRATOR')) return true;
+          if (checkAdmin && member.permissions.has('ADMINISTRATOR')) return true;
           const roles = this.validator as RoleArray;
           return roles.length > 0
             ? roles.every((r) => !!member.roles.cache.some((role) => role.id === r))
