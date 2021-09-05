@@ -17,6 +17,7 @@ export default {
             }
         },
         channels: {
+			suggestions: '829926184686190623',
             php: '874645017103323187',
             rust: '874645038007738408',
             javascript: '874645026905399386',

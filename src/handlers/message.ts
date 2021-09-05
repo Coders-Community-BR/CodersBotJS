@@ -2,8 +2,8 @@ import { Message } from 'discord.js';
 import CodersBot from '~/CodersBot';
 import LogHandler, { ELogsHandlerLevel } from './logs';
 import Handler from './_base';
-import TestConfig from '~/config/test.config';
-
+import CommandConfig from '~/config/command.config';
+import * as SuggestionHandler from '~/handlers/suggestions'
 export interface MessageHandlerConfig {
   prefix: string;
 }
@@ -23,14 +23,21 @@ export default class MessageHandler extends Handler<MessageHandlerConfig> {
   }
 
   public async listener(message: Message) {
+    if (message.channel.id == CommandConfig.ids.channels.suggestions) {
+      SuggestionHandler.onMessageAtSuggestionsChannels(message);
+    }
     this.logger.WriteLine(
-      `MESSAGE: '${message.content}'\n\tsent by [${message.author.id}:${
-        message.author.username
-      }]\n\tin [${message.channel.id}:${
-        message.guild?.name ?? message.author.username
+      `MESSAGE: '${message.content}'\n\tsent by [${message.author.id}:${message.author.username
+      }]\n\tin [${message.channel.id}:${message.guild?.name ?? message.author.username
       }]\n\tat [${new Date().toLocaleString('pt-BR')}]`
     );
-    if (
+	let TestConfig = {};
+	try {
+		TestConfig = await import('~/config/test.config');
+	} catch(err: unknown) {
+		console.log('[WARN] please create a file: src/config/test.config. Using default.')
+	}  
+	if (
       TestConfig.filterTesters &&
       TestConfig.filterTesters.length > 0 &&
       !TestConfig.filterTesters.includes(message.author.id) ||
