@@ -12,13 +12,20 @@
       "email": "igor@gargantas.org",
       "name": "Igor M. Pereira",
       "url": "https://github.com/Igor-MPereira"
+    },
+    {
+      "email": "bolaknt@gmail.com",
+      "name": "yxqsnz",
+      "url": "https://github.com/yxqsnz"
     }
   ],
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "discord.js": "^12.5.3",
-    "dotenv": "^10.0.0"
+    "discord-buttons": "^4.0.0",
+    "discord.js": "13",
+    "dotenv": "^10.0.0",
+    "linq4js": "^2.2.3"
   },
   "devDependencies": {
     "@types/node": "^16.4.4",
@@ -27,14 +34,15 @@
     "eslint": "^7.31.0",
     "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-import": "^2.23.4",
+    "prettier": "^2.3.2",
     "ts-node-dev": "^1.1.8",
     "tsconfig-paths": "^3.10.1",
-    "typescript": "^4.3.5"
+    "typescript": "^4.4.0-beta"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "yarn build&&node dist/src/index.js",
-    "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules index.ts"
+    "build": "node -e \"const f=require('fs');const p=require('path');f.rm(p.resolve(process.cwd(),'dist'),{force:!0,recursive:!0,retryDelay:1e3,maxRetries:3},()=>{})\"&&tsc --project tsconfig.build.json&&cd build-config&&node build.js",
+    "dev": "ts-node-dev -r tsconfig-paths/register --ignore-watch node_modules index.ts",
+    "cpuprofile": "tsc --generateCpuProfile tsc-output.cpuprofile"
   },
   "engines": {
     "node": ">=12.x.x"
